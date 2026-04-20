@@ -1,14 +1,12 @@
 /**
- * Write a description of class Typist here.
- *
- * Starter code generously abandoned by Ty Posaurus, your predecessor,
- * who typed with two fingers and considered that "good enough".
- * He left a sticky note: "the slide-back thing is optional probably".
- * It is not optional. Good luck.
+ * The Typist class represents a competitor in a typing race simulatior.
+ * It stores the typist’s name, symbol, accuracy, progress, and burnout state,
+ * and provides methods to update and manage how they perform during the race.
  *
  * @author Suleyman Macit, with contributions from Ty Posaurus
  * @version 1.0
  */
+
 public class Typist
 {
     // Fields of class Typist
@@ -50,7 +48,8 @@ public class Typist
      */
     public void burnOut(int turns)
     {
-
+        burntOut = true;
+        burnoutTurnsRemaining = turns;
     }
 
     /**
@@ -60,7 +59,16 @@ public class Typist
      */
     public void recoverFromBurnout()
     {
+        if (burntOut)
+        {
+            burnoutTurnsRemaining--;
 
+            if (burnoutTurnsRemaining <= 0)
+            {
+                burntOut = false;
+                burnoutTurnsRemaining = 0;
+            }
+        }
     }
 
     /**
@@ -122,7 +130,9 @@ public class Typist
      */
     public void resetToStart()
     {
-
+        progress = 0;
+        burntOut = false;
+        burnoutTurnsRemaining = 0;
     }
 
     /**
@@ -141,7 +151,10 @@ public class Typist
      */
     public void typeCharacter()
     {
-
+        if (!burntOut)
+        {
+            progress++;
+        }
     }
 
     /**
@@ -152,7 +165,12 @@ public class Typist
      */
     public void slideBack(int amount)
     {
+        progress = progress - amount;
 
+        if (progress < 0)
+        {
+            progress = 0;
+        }
     }
 
     /**
@@ -163,7 +181,18 @@ public class Typist
      */
     public void setAccuracy(double newAccuracy)
     {
-
+        if (newAccuracy < 0.0)
+        {
+            accuracy = 0.0;
+        }
+        else if (newAccuracy > 1.0)
+        {
+            accuracy = 1.0;
+        }
+        else
+        {
+            accuracy = newAccuracy;
+        }
     }
 
     /**
@@ -173,7 +202,7 @@ public class Typist
      */
     public void setSymbol(char newSymbol)
     {
-
+        symbol = newSymbol;
     }
 
 }
