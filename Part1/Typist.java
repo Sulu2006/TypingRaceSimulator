@@ -6,19 +6,18 @@
  * He left a sticky note: "the slide-back thing is optional probably".
  * It is not optional. Good luck.
  *
- * @author (your name)
- * @version (a version number or a date)
+ * @author Suleyman Macit, with contributions from Ty Posaurus
+ * @version 1.0
  */
 public class Typist
 {
     // Fields of class Typist
-    // Hint: you will need six fields. Think carefully about their types.
-    // One of them tracks how far along the passage the typist has reached.
-    // Another tracks whether the typist is currently burnt out.
-    // A third tracks HOW MANY turns of burnout remain (not just whether they are burnt out).
-    // The remaining three should be fairly obvious.
-
-
+    private String name;
+    private char symbol;
+    private int progress;
+    private boolean burntOut;
+    private int burnoutTurnsRemaining;
+    private double accuracy;
 
 
     // Constructor of class Typist
@@ -32,7 +31,12 @@ public class Typist
      */
     public Typist(char typistSymbol, String typistName, double typistAccuracy)
     {
-
+        symbol = typistSymbol;
+        name = typistName;
+        progress = 0;
+        burntOut = false;
+        burnoutTurnsRemaining = 0;
+        setAccuracy(typistAccuracy);
     }
 
 
