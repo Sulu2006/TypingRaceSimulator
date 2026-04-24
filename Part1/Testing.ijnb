@@ -1,0 +1,201 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 5,
+  "metadata": {
+    "language_info": {
+      "name": "java"
+    }
+  },
+  "cells": [
+    {
+      "id": "9f630f3f-2c27-4fef-8f1e-373ba12fb69a",
+      "cell_type": "markdown",
+      "source": "### Test 1 - slideBack() cannot make progress go below zero\r\n#### What this test is checking\r\n\r\nThis test proves that a typist cannot move into negative progress after sliding back too far.",
+      "metadata": {
+        "language": "markdown",
+        "id": "9f630f3f-2c27-4fef-8f1e-373ba12fb69a"
+      }
+    },
+    {
+      "id": "b3b6db9a-7268-4c8c-99fe-5c54cf2e68c4",
+      "cell_type": "code",
+      "source": "Typist typist1 = new Typist('①', \"RACER1\", 0.85);\r\n\r\nSystem.out.println(\"Initial progress: \" + typist1.getProgress());\r\n\r\ntypist1.typeCharacter();\r\ntypist1.typeCharacter();\r\nSystem.out.println(\"Progress after typing twice: \" + typist1.getProgress());\r\n\r\ntypist1.slideBack(5);\r\nSystem.out.println(\"Progress after slideBack(5): \" + typist1.getProgress());",
+      "metadata": {
+        "language": "java",
+        "executionSummary": {
+          "executionOrder": 34,
+          "success": true
+        }
+      },
+      "execution_count": 34,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": "Initial progress: 0\r\nProgress after typing twice: 2\r\nProgress after slideBack(5): 0\r\n"
+          },
+          "metadata": {},
+          "execution_count": 34
+        }
+      ]
+    },
+    {
+      "id": "0a2d58ea-a62f-4201-b373-e17aafe46d5d",
+      "cell_type": "markdown",
+      "source": "### Test 2 - burnout counts down correctly and clears at zero\r\n#### What this test is checking\r\n\r\nThis test proves that:\r\n\r\n- burnout starts correctly\r\n- burnout turns reduce one by one\r\n- burnout is removed when the counter reaches zero",
+      "metadata": {
+        "language": "markdown",
+        "id": "0a2d58ea-a62f-4201-b373-e17aafe46d5d"
+      }
+    },
+    {
+      "id": "6746b5d4-9d8b-4700-b358-6b6148bcf23e",
+      "cell_type": "code",
+      "source": "Typist typist2 = new Typist('②', \"RACER2\", 0.60);\r\n\r\ntypist2.burnOut(2);\r\n\r\nSystem.out.println(\"Burnt out? \" + typist2.isBurntOut());\r\nSystem.out.println(\"Turns remaining: \" + typist2.getBurnoutTurnsRemaining());\r\n\r\ntypist2.recoverFromBurnout();\r\nSystem.out.println(\"After one recovery:\");\r\nSystem.out.println(\"Burnt out? \" + typist2.isBurntOut());\r\nSystem.out.println(\"Turns remaining: \" + typist2.getBurnoutTurnsRemaining());\r\n\r\ntypist2.recoverFromBurnout();\r\nSystem.out.println(\"After second recovery:\");\r\nSystem.out.println(\"Burnt out? \" + typist2.isBurntOut());\r\nSystem.out.println(\"Turns remaining: \" + typist2.getBurnoutTurnsRemaining());",
+      "metadata": {
+        "language": "java",
+        "executionSummary": {
+          "executionOrder": 35,
+          "success": true
+        }
+      },
+      "execution_count": 35,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": "Burnt out? true\r\nTurns remaining: 2\r\nAfter one recovery:\r\nBurnt out? true\r\nTurns remaining: 1\r\nAfter second recovery:\r\nBurnt out? false\r\nTurns remaining: 0\r\n"
+          },
+          "metadata": {},
+          "execution_count": 35
+        }
+      ]
+    },
+    {
+      "id": "aa1730e2-1f23-4730-942a-cc586c826293",
+      "cell_type": "markdown",
+      "source": "### Test 3 - resetToStart() clears both progress and burnout state\r\n#### What this test is checking\r\n\r\nThis test proves that resetToStart() returns the typist to a clean race-ready state.",
+      "metadata": {
+        "language": "markdown",
+        "id": "aa1730e2-1f23-4730-942a-cc586c826293"
+      }
+    },
+    {
+      "id": "2be39678-3a4d-47ab-a03b-872245d06da9",
+      "cell_type": "code",
+      "source": "Typist typist3 = new Typist('③', \"RACER3\", 0.30);\r\n\r\ntypist3.typeCharacter();\r\ntypist3.typeCharacter();\r\ntypist3.burnOut(3);\r\n\r\nSystem.out.println(\"Before reset:\");\r\nSystem.out.println(\"Progress: \" + typist3.getProgress());\r\nSystem.out.println(\"Burnt out? \" + typist3.isBurntOut());\r\nSystem.out.println(\"Turns remaining: \" + typist3.getBurnoutTurnsRemaining());\r\n\r\ntypist3.resetToStart();\r\n\r\nSystem.out.println(\"After reset:\");\r\nSystem.out.println(\"Progress: \" + typist3.getProgress());\r\nSystem.out.println(\"Burnt out? \" + typist3.isBurntOut());\r\nSystem.out.println(\"Turns remaining: \" + typist3.getBurnoutTurnsRemaining());",
+      "metadata": {
+        "language": "java",
+        "executionSummary": {
+          "executionOrder": 24,
+          "success": true
+        }
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": "Before reset:\r\nProgress: 2\r\nBurnt out? true\r\nTurns remaining: 3\r\nAfter reset:\r\nProgress: 0\r\nBurnt out? false\r\nTurns remaining: 0\r\n"
+          },
+          "metadata": {},
+          "execution_count": 24
+        }
+      ]
+    },
+    {
+      "id": "b94d1f50-a347-4045-a574-5f2e9481d17b",
+      "cell_type": "markdown",
+      "source": "### Test 4 - setAccuracy() clamps values outside 0.0 - 1.0\r\n#### What this test is checking\r\n\r\nThis test proves that invalid accuracy values are forced into the valid range instead of being stored directly.",
+      "metadata": {
+        "language": "markdown",
+        "id": "b94d1f50-a347-4045-a574-5f2e9481d17b"
+      }
+    },
+    {
+      "id": "1bc36316-9aca-4e22-8d5c-fea3bc836c09",
+      "cell_type": "code",
+      "source": "Typist typist4 = new Typist('④', \"RACER4\", 0.50);\r\n\r\nSystem.out.println(\"Initial accuracy: \" + typist4.getAccuracy());\r\n\r\ntypist4.setAccuracy(1.5);\r\nSystem.out.println(\"After setAccuracy(1.5): \" + typist4.getAccuracy());\r\n\r\ntypist4.setAccuracy(-0.2);\r\nSystem.out.println(\"After setAccuracy(-0.2): \" + typist4.getAccuracy());\r\n\r\ntypist4.setAccuracy(0.75);\r\nSystem.out.println(\"After setAccuracy(0.75): \" + typist4.getAccuracy());",
+      "metadata": {
+        "language": "java",
+        "executionSummary": {
+          "executionOrder": 25,
+          "success": true
+        }
+      },
+      "execution_count": 25,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": "Initial accuracy: 0.5\r\nAfter setAccuracy(1.5): 1.0\r\nAfter setAccuracy(-0.2): 0.0\r\nAfter setAccuracy(0.75): 0.75\r\n"
+          },
+          "metadata": {},
+          "execution_count": 25
+        }
+      ]
+    },
+    {
+      "id": "9855f812-f4e9-4b09-a5b2-733693a5aa5e",
+      "cell_type": "markdown",
+      "source": "### Test 5 - typeCharacter() gives normal forward movement\r\n#### What this test is checking\r\n\r\nThis test proves that the typist moves forward normally when typing correctly.",
+      "metadata": {
+        "language": "markdown",
+        "id": "9855f812-f4e9-4b09-a5b2-733693a5aa5e"
+      }
+    },
+    {
+      "id": "cdca6593-469f-4397-8fda-a83694c292d9",
+      "cell_type": "code",
+      "source": "Typist typist5 = new Typist('⑤', \"RACER5\", 0.90);\r\n\r\nSystem.out.println(\"Initial progress: \" + typist5.getProgress());\r\n\r\ntypist5.typeCharacter();\r\nSystem.out.println(\"After one typeCharacter(): \" + typist5.getProgress());\r\n\r\ntypist5.typeCharacter();\r\nSystem.out.println(\"After two typeCharacter() calls: \" + typist5.getProgress());",
+      "metadata": {
+        "language": "java",
+        "executionSummary": {
+          "executionOrder": 26,
+          "success": true
+        }
+      },
+      "execution_count": 26,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": "Initial progress: 0\r\nAfter one typeCharacter(): 1\r\nAfter two typeCharacter() calls: 2\r\n"
+          },
+          "metadata": {},
+          "execution_count": 26
+        }
+      ]
+    },
+    {
+      "id": "6091d42e-94e4-427c-9d2b-474bfb2884b6",
+      "cell_type": "markdown",
+      "source": "### Typist.java code",
+      "metadata": {
+        "language": "markdown",
+        "id": "6091d42e-94e4-427c-9d2b-474bfb2884b6"
+      }
+    },
+    {
+      "id": "f0e85ad0-b150-4350-b36a-313e6305ddd6",
+      "cell_type": "code",
+      "source": "/**\r\n * The Typist class represents a competitor in a typing race simulatior.\r\n * It stores the typist’s name, symbol, accuracy, progress, and burnout state,\r\n * and provides methods to update and manage how they perform during the race.\r\n *\r\n * @author Suleyman Macit, with contributions from Ty Posaurus\r\n * @version 1.0\r\n */\r\n\r\npublic final class Typist\r\n{\r\n    // Fields of class Typist\r\n    private final String name;\r\n    private char symbol;\r\n    private int progress;\r\n    private boolean burntOut;\r\n    private int burnoutTurnsRemaining;\r\n    private double accuracy;\r\n\r\n\r\n    // Constructor of class Typist\r\n    /**\r\n     * Constructor for objects of class Typist.\r\n     * Creates a new typist with a given symbol, name, and accuracy rating.\r\n     *\r\n     * @param typistSymbol  a single Unicode character representing this typist (e.g. '①', '②', '③')\r\n     * @param typistName    the name of the typist (e.g. \"TURBOFINGERS\")\r\n     * @param typistAccuracy the typist's accuracy rating, between 0.0 and 1.0\r\n     */\r\n    public Typist(char typistSymbol, String typistName, double typistAccuracy)\r\n    {\r\n        symbol = typistSymbol;\r\n        name = typistName;\r\n        progress = 0;\r\n        burntOut = false;\r\n        burnoutTurnsRemaining = 0;\r\n        setAccuracy(typistAccuracy);\r\n    }\r\n\r\n \r\n    // Methods of class Typist\r\n\r\n    /**\r\n     * Sets this typist into a burnout state for a given number of turns.\r\n     * A burnt-out typist cannot type until their burnout has worn off.\r\n     *\r\n     * @param turns the number of turns the burnout will last\r\n     */\r\n    public void burnOut(int turns)\r\n    {\r\n        if (turns <= 0)\r\n        {\r\n            burntOut = false;\r\n            burnoutTurnsRemaining = 0;\r\n        }\r\n        else\r\n        {\r\n            burntOut = true;\r\n            burnoutTurnsRemaining = turns;\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Reduces the remaining burnout counter by one turn.\r\n     * When the counter reaches zero, the typist recovers automatically.\r\n     * Has no effect if the typist is not currently burnt out.\r\n     */\r\n    public void recoverFromBurnout()\r\n    {\r\n        if (burntOut)\r\n        {\r\n            burnoutTurnsRemaining--;\r\n\r\n            if (burnoutTurnsRemaining <= 0)\r\n            {\r\n                burntOut = false;\r\n                burnoutTurnsRemaining = 0;\r\n            }\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Returns the typist's accuracy rating.\r\n     *\r\n     * @return accuracy as a double between 0.0 and 1.0\r\n     */\r\n    public double getAccuracy()\r\n    {\r\n        return accuracy;\r\n    }\r\n\r\n    /**\r\n     * Returns the typist's current progress through the passage.\r\n     * Progress is measured in characters typed correctly so far.\r\n     * Note: this value can decrease if the typist mistypes.\r\n     *\r\n     * @return progress as a non-negative integer\r\n     */\r\n    public int getProgress()\r\n    {\r\n        return progress;\r\n    }\r\n\r\n    /**\r\n     * Returns the name of the typist.\r\n     *\r\n     * @return the typist's name as a String\r\n     */\r\n    public String getName()\r\n    {\r\n        return name;\r\n    }\r\n\r\n    /**\r\n     * Returns the character symbol used to represent this typist.\r\n     *\r\n     * @return the typist's symbol as a char\r\n     */\r\n    public char getSymbol()\r\n    {\r\n        return symbol;\r\n    }\r\n\r\n    /**\r\n     * Returns the number of turns of burnout remaining.\r\n     * Returns 0 if the typist is not currently burnt out.\r\n     *\r\n     * @return burnout turns remaining as a non-negative integer\r\n     */\r\n    public int getBurnoutTurnsRemaining()\r\n    {\r\n        return burnoutTurnsRemaining;\r\n    }\r\n\r\n    /**\r\n     * Resets the typist to their initial state, ready for a new race.\r\n     * Progress returns to zero, burnout is cleared entirely.\r\n     */\r\n    public void resetToStart()\r\n    {\r\n        progress = 0;\r\n        burntOut = false;\r\n        burnoutTurnsRemaining = 0;\r\n    }\r\n\r\n    /**\r\n     * Returns true if this typist is currently burnt out, false otherwise.\r\n     *\r\n     * @return true if burnt out\r\n     */\r\n    public boolean isBurntOut()\r\n    {\r\n        return burntOut;\r\n    }\r\n\r\n    /**\r\n     * Advances the typist forward by one character along the passage.\r\n     * Should only be called when the typist is not burnt out.\r\n     */\r\n    public void typeCharacter()\r\n    {\r\n        if (!burntOut)\r\n        {\r\n            progress++;\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Moves the typist backwards by a given number of characters (a mistype).\r\n     * Progress cannot go below zero — the typist cannot slide off the start.\r\n     *\r\n     * @param amount the number of characters to slide back (must be positive)\r\n     */\r\n    public void slideBack(int amount)\r\n    {\r\n        if (amount <= 0)\r\n        {\r\n            return;\r\n        }\r\n\r\n        progress = progress - amount;\r\n\r\n        if (progress < 0)\r\n        {\r\n            progress = 0;\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Sets the accuracy rating of the typist.\r\n     * Values below 0.0 should be set to 0.0; values above 1.0 should be set to 1.0.\r\n     *\r\n     * @param newAccuracy the new accuracy rating\r\n     */\r\n    public void setAccuracy(double newAccuracy)\r\n    {\r\n        if (newAccuracy < 0.0)\r\n        {\r\n            accuracy = 0.0;\r\n        }\r\n        else if (newAccuracy > 1.0)\r\n        {\r\n            accuracy = 1.0;\r\n        }\r\n        else\r\n        {\r\n            accuracy = newAccuracy;\r\n        }\r\n    }\r\n\r\n    /**\r\n     * Sets the symbol used to represent this typist.\r\n     *\r\n     * @param newSymbol the new symbol character\r\n     */\r\n    public void setSymbol(char newSymbol)\r\n    {\r\n        symbol = newSymbol;\r\n    }\r\n\r\n}\r\n",
+      "metadata": {
+        "language": "java",
+        "executionSummary": {
+          "executionOrder": 30,
+          "success": true
+        }
+      },
+      "execution_count": 30,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {},
+          "metadata": {},
+          "execution_count": 30
+        }
+      ]
+    }
+  ]
+}

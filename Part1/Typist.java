@@ -7,10 +7,10 @@
  * @version 1.0
  */
 
-public class Typist
+public final class Typist
 {
     // Fields of class Typist
-    private String name;
+    private final String name;
     private char symbol;
     private int progress;
     private boolean burntOut;
@@ -37,7 +37,7 @@ public class Typist
         setAccuracy(typistAccuracy);
     }
 
-
+ 
     // Methods of class Typist
 
     /**
@@ -48,8 +48,16 @@ public class Typist
      */
     public void burnOut(int turns)
     {
-        burntOut = true;
-        burnoutTurnsRemaining = turns;
+        if (turns <= 0)
+        {
+            burntOut = false;
+            burnoutTurnsRemaining = 0;
+        }
+        else
+        {
+            burntOut = true;
+            burnoutTurnsRemaining = turns;
+        }
     }
 
     /**
@@ -165,6 +173,11 @@ public class Typist
      */
     public void slideBack(int amount)
     {
+        if (amount <= 0)
+        {
+            return;
+        }
+
         progress = progress - amount;
 
         if (progress < 0)
