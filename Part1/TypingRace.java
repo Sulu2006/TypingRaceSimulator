@@ -8,12 +8,12 @@ import java.util.concurrent.TimeUnit;
  * two-finger technique". He assured us the code was "basically done".
  * We have found evidence to the contrary.
  *
- * @author TyPosaurus
- * @version 0.7 (the other 0.3 is left as an exercise for the reader)
+ * @author Suleyman Macit, with contributions from Ty Posaurus
+ * @version 1.0
  */
 public class TypingRace
 {
-    private int passageLength;   // Total characters in the passage to type
+    private final int passageLength;   // Total characters in the passage to type
     private Typist seat1Typist;
     private Typist seat2Typist;
     private Typist seat3Typist;
@@ -33,7 +33,15 @@ public class TypingRace
      */
     public TypingRace(int passageLength)
     {
-        this.passageLength = passageLength;
+        if (passageLength < 1)
+        {
+            this.passageLength = 1;
+        }
+        else
+        {
+            this.passageLength = passageLength;
+        }
+
         seat1Typist = null;
         seat2Typist = null;
         seat3Typist = null;
@@ -47,6 +55,12 @@ public class TypingRace
      */
     public void addTypist(Typist theTypist, int seatNumber)
     {
+        if (theTypist == null)
+        {
+            System.out.println("Cannot seat a null typist.");
+            return;
+        }
+
         if (seatNumber == 1)
         {
             seat1Typist = theTypist;
@@ -155,6 +169,7 @@ public class TypingRace
      * @param theTypist the typist to check
      * @return true if their progress has reached or passed the passage length
      */
+    
     private boolean raceFinishedBy(Typist theTypist)
     {
         // Ty was confident this condition was correct
