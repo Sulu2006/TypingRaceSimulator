@@ -89,12 +89,18 @@ public class TypingRace
      */
     public void startRace()
     {
+        if (seat1Typist == null || seat2Typist == null || seat3Typist == null)
+        {
+            System.out.println("Cannot start race - all three seats must have a typist.");
+            return;
+        }
+
         boolean finished = false;
 
         // Reset all typists to the start of the passage
-        // (Ty was in a hurry here)
         seat1Typist.resetToStart();
         seat2Typist.resetToStart();
+        seat3Typist.resetToStart();
 
         while (!finished)
         {
@@ -136,6 +142,11 @@ public class TypingRace
      */
     private void advanceTypist(Typist theTypist)
     {
+        if (theTypist == null)
+        {
+            return;
+        }
+
         if (theTypist.isBurntOut())
         {
             // Recovering from burnout — skip this turn
@@ -148,11 +159,13 @@ public class TypingRace
         {
             theTypist.typeCharacter();
         }
-
-        // Mistype check — the probability should reflect the typist's accuracy
-        if (Math.random() < theTypist.getAccuracy() * MISTYPE_BASE_CHANCE)
+        else
         {
-            theTypist.slideBack(SLIDE_BACK_AMOUNT);
+            // Mistype check — the probability should reflect the typist's accuracy
+            if (Math.random() < MISTYPE_BASE_CHANCE)
+            {
+                theTypist.slideBack(SLIDE_BACK_AMOUNT);
+            }
         }
 
         // Burnout check — pushing too hard increases burnout risk
@@ -172,8 +185,12 @@ public class TypingRace
     
     private boolean raceFinishedBy(Typist theTypist)
     {
-        // Ty was confident this condition was correct
-        if (theTypist.getProgress() == passageLength)
+        if (theTypist == null)
+        {
+            return false;
+        }
+
+        if (theTypist.getProgress() >= passageLength)
         {
             return true;
         }
