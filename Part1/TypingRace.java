@@ -87,7 +87,7 @@ public class TypingRace
      * Note from Ty: "I didn't bother printing the winner at the end,
      * you can probably figure that out yourself."
      */
-   public void startRace()
+    public void startRace()
     {
         if (seat1Typist == null || seat2Typist == null || seat3Typist == null)
         {
@@ -96,35 +96,58 @@ public class TypingRace
         }
 
         boolean finished = false;
+        Typist winner = null;
 
+        // Reset all typists to the start of the passage
         seat1Typist.resetToStart();
         seat2Typist.resetToStart();
         seat3Typist.resetToStart();
 
         while (!finished)
         {
+            // Advance each typist by one turn
             advanceTypist(seat1Typist);
             advanceTypist(seat2Typist);
             advanceTypist(seat3Typist);
 
+            // Print the current state of the race
             printRace();
 
-            if (raceFinishedBy(seat1Typist) || raceFinishedBy(seat2Typist) || raceFinishedBy(seat3Typist))
+            // Check if any typist has finished the passage
+            if (raceFinishedBy(seat1Typist))
             {
+                winner = seat1Typist;
+                finished = true;
+            }
+            else if (raceFinishedBy(seat2Typist))
+            {
+                winner = seat2Typist;
+                finished = true;
+            }
+            else if (raceFinishedBy(seat3Typist))
+            {
+                winner = seat3Typist;
                 finished = true;
             }
 
-            try
+            if (!finished)
             {
-                TimeUnit.MILLISECONDS.sleep(200);
-            }
-            catch (InterruptedException e)
-            {
-                Thread.currentThread().interrupt();
+                // Wait 200ms between turns so the animation is visible
+                try
+                {
+                    TimeUnit.MILLISECONDS.sleep(200);
+                }
+                catch (InterruptedException e)
+                {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
 
-        // Task 2a: print the winner later
+        if (winner != null)
+        {
+            System.out.println("And the winner is... " + winner.getName() + "!");
+        }
     }
 
     /**
