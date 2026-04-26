@@ -87,7 +87,7 @@ public class TypingRace
      * Note from Ty: "I didn't bother printing the winner at the end,
      * you can probably figure that out yourself."
      */
-    public void startRace()
+   public void startRace()
     {
         if (seat1Typist == null || seat2Typist == null || seat3Typist == null)
         {
@@ -97,34 +97,34 @@ public class TypingRace
 
         boolean finished = false;
 
-        // Reset all typists to the start of the passage
         seat1Typist.resetToStart();
         seat2Typist.resetToStart();
         seat3Typist.resetToStart();
 
         while (!finished)
         {
-            // Advance each typist by one turn
             advanceTypist(seat1Typist);
             advanceTypist(seat2Typist);
             advanceTypist(seat3Typist);
 
-            // Print the current state of the race
             printRace();
 
-            // Check if any typist has finished the passage
-            if ( raceFinishedBy(seat1Typist) || raceFinishedBy(seat2Typist) || raceFinishedBy(seat3Typist) )
+            if (raceFinishedBy(seat1Typist) || raceFinishedBy(seat2Typist) || raceFinishedBy(seat3Typist))
             {
                 finished = true;
             }
 
-            // Wait 200ms between turns so the animation is visible
-            try {
+            try
+            {
                 TimeUnit.MILLISECONDS.sleep(200);
-            } catch (Exception e) {}
+            }
+            catch (InterruptedException e)
+            {
+                Thread.currentThread().interrupt();
+            }
         }
 
-        // TODO (Task 2a): Print the winner's name here
+        // Task 2a: print the winner later
     }
 
     /**
@@ -182,22 +182,14 @@ public class TypingRace
      * @param theTypist the typist to check
      * @return true if their progress has reached or passed the passage length
      */
-    
-    private boolean raceFinishedBy(Typist theTypist)
+        private boolean raceFinishedBy(Typist theTypist)
     {
         if (theTypist == null)
         {
             return false;
         }
 
-        if (theTypist.getProgress() >= passageLength)
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return theTypist.getProgress() >= passageLength;
     }
 
     /**
@@ -209,7 +201,7 @@ public class TypingRace
     {
         System.out.print('\u000C'); // Clear terminal
 
-        System.out.println("  TYPING RACE — passage length: " + passageLength + " chars");
+        System.out.println("  TYPING RACE - passage length: " + passageLength + " chars");
         multiplePrint('=', passageLength + 3);
         System.out.println();
 
@@ -224,7 +216,7 @@ public class TypingRace
 
         multiplePrint('=', passageLength + 3);
         System.out.println();
-        System.out.println("  [zz] = burnt out    [<] = just mistyped");
+        System.out.println("  [~] = burnt out    [<] = just mistyped");
     }
 
     /**
@@ -232,7 +224,7 @@ public class TypingRace
      *
      * Examples:
      *   |          ⌨           | TURBOFINGERS (Accuracy: 0.85)
-     *   |    [zz]              | HUNT_N_PECK  (Accuracy: 0.40) BURNT OUT (2 turns)
+     *   |    [~]              | HUNT_N_PECK  (Accuracy: 0.40) BURNT OUT (2 turns)
      *
      * Note: Ty forgot to show when a typist has just mistyped. That would
      * be a nice improvement — perhaps a [<] marker after their symbol.
@@ -250,6 +242,7 @@ public class TypingRace
         // Always show the typist's symbol so they can be identified on screen.
         // Append ~ when burnt out so the state is visible without hiding identity.
         System.out.print(theTypist.getSymbol());
+        
         if (theTypist.isBurntOut())
         {
             System.out.print('~');
