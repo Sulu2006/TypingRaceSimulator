@@ -18,11 +18,20 @@ public class TypingRace
     private Typist seat2Typist;
     private Typist seat3Typist;
 
+    private boolean seat1JustMistyped;
+    private boolean seat2JustMistyped;
+    private boolean seat3JustMistyped;
+
+
     // Accuracy thresholds for mistype and burnout events
     // (Ty tuned these values "by feel". They may need adjustment.)
     private static final double MISTYPE_BASE_CHANCE = 0.3;
     private static final int    SLIDE_BACK_AMOUNT   = 2;
     private static final int    BURNOUT_DURATION     = 3;
+
+    private static final double WINNER_ACCURACY_BONUS = 0.02;
+    private static final double BURNOUT_ACCURACY_PENALTY = 0.02;
+
 
     /**
      * Constructor for objects of class TypingRace.
@@ -45,6 +54,12 @@ public class TypingRace
         seat1Typist = null;
         seat2Typist = null;
         seat3Typist = null;
+
+        seat1JustMistyped = false;
+        seat2JustMistyped = false;
+        seat3JustMistyped = false;
+
+
     }
 
     /**
@@ -61,21 +76,11 @@ public class TypingRace
             return;
         }
 
-        if (seatNumber == 1)
-        {
-            seat1Typist = theTypist;
-        }
-        else if (seatNumber == 2)
-        {
-            seat2Typist = theTypist;
-        }
-        else if (seatNumber == 3)
-        {
-            seat3Typist = theTypist;
-        }
-        else
-        {
-            System.out.println("Cannot seat typist at seat " + seatNumber + " — there is no such seat.");
+        switch (seatNumber) {
+            case 1 -> seat1Typist = theTypist;
+            case 2 -> seat2Typist = theTypist;
+            case 3 -> seat3Typist = theTypist;
+            default -> System.out.println("Cannot seat typist at seat " + seatNumber + " — there is no such seat.");
         }
     }
 
@@ -106,9 +111,10 @@ public class TypingRace
         while (!finished)
         {
             // Advance each typist by one turn
-            advanceTypist(seat1Typist);
-            advanceTypist(seat2Typist);
-            advanceTypist(seat3Typist);
+            seat1JustMistyped = advanceTypist(seat1Typist);
+            seat2JustMistyped = advanceTypist(seat2Typist);
+            seat3JustMistyped = advanceTypist(seat3Typist);
+
 
             // Print the current state of the race
             printRace();
@@ -146,8 +152,17 @@ public class TypingRace
 
         if (winner != null)
         {
+            double oldAccuracy = winner.getAccuracy();
+            winner.setAccuracy(oldAccuracy + WINNER_ACCURACY_BONUS);
+
             System.out.println("And the winner is... " + winner.getName() + "!");
+            System.out.printf(
+                "Final accuracy: %.2f (improved from %.2f)%n",
+                winner.getAccuracy(),
+                oldAccuracy
+            );
         }
+
     }
 
     /**
@@ -163,41 +178,43 @@ public class TypingRace
      *
      * @param theTypist the typist to advance
      */
-    private void advanceTypist(Typist theTypist)
+    private boolean advanceTypist(Typist theTypist)
     {
         if (theTypist == null)
         {
-            return;
+            return false;
         }
 
         if (theTypist.isBurntOut())
         {
-            // Recovering from burnout — skip this turn
             theTypist.recoverFromBurnout();
-            return;
+            return false;
         }
 
-        // Attempt to type a character
+        boolean justMistyped = false;
+
         if (Math.random() < theTypist.getAccuracy())
         {
             theTypist.typeCharacter();
         }
         else
         {
-            // Mistype check — the probability should reflect the typist's accuracy
             if (Math.random() < MISTYPE_BASE_CHANCE)
             {
                 theTypist.slideBack(SLIDE_BACK_AMOUNT);
+                justMistyped = true;
             }
         }
 
-        // Burnout check — pushing too hard increases burnout risk
-        // (probability scales with accuracy squared, capped at ~0.05)
         if (Math.random() < 0.05 * theTypist.getAccuracy() * theTypist.getAccuracy())
         {
             theTypist.burnOut(BURNOUT_DURATION);
+            theTypist.setAccuracy(theTypist.getAccuracy() - BURNOUT_ACCURACY_PENALTY);
         }
+
+        return justMistyped;
     }
+
 
     /**
      * Returns true if the given typist has completed the full passage.
@@ -228,13 +245,13 @@ public class TypingRace
         multiplePrint('=', passageLength + 3);
         System.out.println();
 
-        printSeat(seat1Typist);
+        printSeat(seat1Typist, seat1JustMistyped);
         System.out.println();
 
-        printSeat(seat2Typist);
+        printSeat(seat2Typist, seat2JustMistyped);
         System.out.println();
 
-        printSeat(seat3Typist);
+        printSeat(seat3Typist, seat3JustMistyped);
         System.out.println();
 
         multiplePrint('=', passageLength + 3);
@@ -254,7 +271,7 @@ public class TypingRace
      *
      * @param theTypist the typist whose lane to print
      */
-    private void printSeat(Typist theTypist)
+    private void printSeat(Typist theTypist, boolean justMistyped)
     {
         int spacesBefore = theTypist.getProgress();
         int spacesAfter  = passageLength - theTypist.getProgress();
@@ -262,33 +279,41 @@ public class TypingRace
         System.out.print('|');
         multiplePrint(' ', spacesBefore);
 
-        // Always show the typist's symbol so they can be identified on screen.
-        // Append ~ when burnt out so the state is visible without hiding identity.
         System.out.print(theTypist.getSymbol());
-        
+
         if (theTypist.isBurntOut())
         {
             System.out.print('~');
-            spacesAfter--; // symbol + ~ together take two characters
+            spacesAfter--;
         }
 
-        multiplePrint(' ', spacesAfter);
+        if (justMistyped)
+        {
+            System.out.print(" [<]");
+            spacesAfter = spacesAfter - 4;
+        }
+
+        multiplePrint(' ', Math.max(0, spacesAfter));
         System.out.print('|');
         System.out.print(' ');
 
-        // Print name and accuracy
+        System.out.printf("%s (Accuracy: %.2f)",
+            theTypist.getName(),
+            theTypist.getAccuracy());
+
+        if (justMistyped)
+        {
+            System.out.print(" \u2190 just mistyped");
+        }
+
         if (theTypist.isBurntOut())
         {
-            System.out.print(theTypist.getName()
-                + " (Accuracy: " + theTypist.getAccuracy() + ")"
-                + " BURNT OUT (" + theTypist.getBurnoutTurnsRemaining() + " turns)");
-        }
-        else
-        {
-            System.out.print(theTypist.getName()
-                + " (Accuracy: " + theTypist.getAccuracy() + ")");
+            System.out.print(" BURNT OUT ("
+                + theTypist.getBurnoutTurnsRemaining()
+                + " turns)");
         }
     }
+
 
     /**
      * Prints a character a given number of times.
