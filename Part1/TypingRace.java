@@ -24,7 +24,6 @@ public class TypingRace
 
 
     // Accuracy thresholds for mistype and burnout events
-    // (Ty tuned these values "by feel". They may need adjustment.)
     private static final double MISTYPE_BASE_CHANCE = 0.3;
     private static final int    SLIDE_BACK_AMOUNT   = 2;
     private static final int    BURNOUT_DURATION     = 3;
@@ -235,7 +234,6 @@ public class TypingRace
     /**
      * Prints the current state of the race to the terminal.
      * Shows each typist's position along the passage, burnout state,
-     * and a WPM estimate based on current progress.
      */
     private void printRace()
     {

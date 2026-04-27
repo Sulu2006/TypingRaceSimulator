@@ -1,56 +1,67 @@
-# TypingRaceSimulator
+# Part 1: Textual Typing Race Simulator
 
-Object Oriented Programming Project — ECS414U
+This folder contains the Part 1 command-line version of the `TypingRaceSimulator` project for `ECS414U`.
 
-## Project Structure
+## What is included
 
-```
-TypingRaceSimulator/
-├── Part1/    # Textual simulation (Java, command-line)
-└── Part2/    # GUI simulation (to be completed)
-```
-
-## Part 1 — Textual Simulation
-
-### How to compile
-
-```bash
-cd Part1
-javac Typist.java TypingRace.java
-```
-
-### How to run
-
-The race is started by calling `startRace()` on a `TypingRace` object.
-A simple way to test this is to add a `main` method to `TypingRace`, for example:
-
-```java
-public static void main(String[] args) {
-    TypingRace race = new TypingRace(40);
-    race.addTypist(new Typist('①', "TURBOFINGERS", 0.85), 1);
-    race.addTypist(new Typist('②', "QWERTY_QUEEN",  0.60), 2);
-    race.addTypist(new Typist('③', "HUNT_N_PECK",   0.30), 3);
-    race.startRace();
-}
-```
-
-Then run:
-
-```bash
-java TypingRace
-```
-
-## Part 2 — GUI Simulation
-
-To be implemented as part of the coursework. Place all GUI-related source files in this folder. The graphical version is started by calling `startRaceGUI()`.
+- `Main.java` - example entry point used to run the race
+- `Typist.java` - stores each typist's data and behaviour
+- `TypingRace.java` - controls the race simulation and terminal output
+- `Testing.ijnb` - testing evidence for Part 1
 
 ## Dependencies
 
-- Java Development Kit (JDK) 11 or higher
-- No external libraries required for Part 1
-- Part 2 may use Java Swing (included in standard JDK) or JavaFX
+- Java Development Kit (`JDK`) 11 or later
+- No external libraries are required
+
+## Setup instructions
+
+1. Open a terminal.
+2. Navigate to the `Part1` folder.
+3. Compile the Java source files.
+
+Example:
+
+```powershell
+cd Part1
+javac *.java
+```
+
+If your system does not recognise `javac`, make sure the JDK is installed and added to your system `PATH`.
+
+## How to run Part 1
+
+After compiling the files, run:
+
+```powershell
+java Main
+```
+
+This starts the textual typing race simulation in the terminal.
+
+## Usage guidelines
+
+- The race is created in `Main.java` using `new TypingRace(...)`.
+- Three `Typist` objects are created in `Main.java` and added to the race using `addTypist(...)`.
+- The simulation begins when `startRace()` is called.
+- You can edit `Main.java` to change:
+  - the passage length
+  - typist names
+  - typist symbols
+  - typist accuracy values
 
 ## Notes
 
-- All code should compile and run using standard command-line tools without any IDE-specific configuration.
-- The starter code in Part1 was originally written by Ty Posaurus. It contains known issues — finding and fixing them is part of the coursework.
+- The program is designed to compile and run using standard command-line Java tools.
+- The race output is text-based and updates turn by turn in the terminal.
+- If Unicode symbols do not display properly in your terminal, try running the program in an IDE terminal or another UTF-8 compatible terminal.
+
+## Testing
+
+The file `Testing.ijnb` contains Part 1 testing evidence, including checks for:
+
+- `slideBack()` not allowing progress to go below zero
+- burnout counting down correctly
+- `resetToStart()` clearing race state
+- `setAccuracy()` clamping invalid values
+- normal forward movement using `typeCharacter()`
