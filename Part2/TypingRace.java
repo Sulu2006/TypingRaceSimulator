@@ -1,181 +1,364 @@
-import java.util.concurrent.TimeUnit;
-
 /**
- * A typing race simulation. Three typists race to complete a passage of text,
- * advancing character by character — or sliding backwards when they mistype.
+ * A GUI-friendly typing race engine.
+ * The GUI can configure the race, start it, and then advance it
+ * one turn at a time while reading the current state from getters.
  *
- * Originally written by Ty Posaurus, who left this project to "focus on his
- * two-finger technique". He assured us the code was "basically done".
- * We have found evidence to the contrary.
- *
- * @author Suleyman Macit, with contributions from Ty Posaurus
- * @version 1.0
+ * @author Suleyman Macit
+ * @version 2.0
  */
 public class TypingRace
 {
-    private final int passageLength;   // Total characters in the passage to type
-    private Typist seat1Typist;
-    private Typist seat2Typist;
-    private Typist seat3Typist;
+    private static final int MIN_SEAT_COUNT = 2;
+    private static final int MAX_SEAT_COUNT = 6;
 
-    private boolean seat1JustMistyped;
-    private boolean seat2JustMistyped;
-    private boolean seat3JustMistyped;
-
-
-    // Accuracy thresholds for mistype and burnout events
     private static final double MISTYPE_BASE_CHANCE = 0.3;
-    private static final int    SLIDE_BACK_AMOUNT   = 2;
-    private static final int    BURNOUT_DURATION     = 3;
+    private static final int SLIDE_BACK_AMOUNT = 2;
+    private static final int BURNOUT_DURATION = 3;
 
     private static final double WINNER_ACCURACY_BONUS = 0.02;
     private static final double BURNOUT_ACCURACY_PENALTY = 0.02;
 
+    private static final int CAFFEINE_BOOST_TURNS = 10;
+    private static final double CAFFEINE_TYPING_BONUS = 0.10;
+    private static final double CAFFEINE_BURNOUT_MULTIPLIER = 1.5;
+    private static final double NIGHT_SHIFT_ACCURACY_PENALTY = 0.05;
+
+    private final String passageText;
+    private final int passageLength;
+    private final Typist[] typists;
+    private final boolean[] justMistyped;
+
+    private boolean autocorrectEnabled;
+    private boolean caffeineModeEnabled;
+    private boolean nightShiftEnabled;
+
+    private boolean raceStarted;
+    private boolean raceFinished;
+    private int turnNumber;
+    private Typist winner;
 
     /**
-     * Constructor for objects of class TypingRace.
-     * Sets up the race with a passage of the given length.
-     * Initially there are no typists seated.
+     * Creates a race using the full passage text and number of seats.
      *
-     * @param passageLength the number of characters in the passage to type
+     * @param racePassage the passage the typists must complete
+     * @param seatCount the number of typists allowed in the race
      */
-    public TypingRace(int passageLength)
+    public TypingRace(String racePassage, int seatCount)
     {
-        if (passageLength < 1)
+        if (racePassage == null || racePassage.trim().isEmpty())
         {
-            this.passageLength = 1;
+            passageText = " ";
         }
         else
         {
-            this.passageLength = passageLength;
+            passageText = racePassage;
         }
 
-        seat1Typist = null;
-        seat2Typist = null;
-        seat3Typist = null;
+        passageLength = passageText.length();
+        typists = new Typist[clampSeatCount(seatCount)];
+        justMistyped = new boolean[typists.length];
 
-        seat1JustMistyped = false;
-        seat2JustMistyped = false;
-        seat3JustMistyped = false;
+        autocorrectEnabled = false;
+        caffeineModeEnabled = false;
+        nightShiftEnabled = false;
 
-
+        raceStarted = false;
+        raceFinished = false;
+        turnNumber = 0;
+        winner = null;
     }
 
     /**
-     * Seats a typist at the given seat number (1, 2, or 3).
+     * Creates a race with the default of three seats.
      *
-     * @param theTypist  the typist to seat
-     * @param seatNumber the seat to place them in (1–3)
+     * @param racePassage the passage the typists must complete
      */
-    public void addTypist(Typist theTypist, int seatNumber)
+    public TypingRace(String racePassage)
     {
+        this(racePassage, 3);
+    }
+
+    /**
+     * Places a typist into a seat in the race.
+     *
+     * @param theTypist the typist to add
+     * @param seatNumber the seat number to fill, starting from 1
+     * @return true if the typist was seated successfully
+     */
+    public boolean addTypist(Typist theTypist, int seatNumber)
+    {
+        int seatIndex = seatNumber - 1;
+
         if (theTypist == null)
         {
-            System.out.println("Cannot seat a null typist.");
-            return;
+            return false;
         }
 
-        switch (seatNumber) {
-            case 1 -> seat1Typist = theTypist;
-            case 2 -> seat2Typist = theTypist;
-            case 3 -> seat3Typist = theTypist;
-            default -> System.out.println("Cannot seat typist at seat " + seatNumber + " — there is no such seat.");
+        if (seatIndex < 0 || seatIndex >= typists.length)
+        {
+            return false;
         }
+
+        typists[seatIndex] = theTypist;
+        return true;
     }
 
     /**
-     * Starts the typing race.
-     * All typists are reset to the beginning, then the simulation runs
-     * turn by turn until one typist completes the full passage.
+     * Starts a new race by resetting all typists and race state.
      *
-     * Note from Ty: "I didn't bother printing the winner at the end,
-     * you can probably figure that out yourself."
+     * @return true if the race was ready to start
      */
-    public void startRace()
+    public boolean startRace()
     {
-        if (seat1Typist == null || seat2Typist == null || seat3Typist == null)
+        if (!allSeatsFilled())
         {
-            System.out.println("Cannot start race - all three seats must have a typist.");
-            return;
+            return false;
         }
 
-        boolean finished = false;
-        Typist winner = null;
-
-        // Reset all typists to the start of the passage
-        seat1Typist.resetToStart();
-        seat2Typist.resetToStart();
-        seat3Typist.resetToStart();
-
-        while (!finished)
+        for (Typist typist : typists)
         {
-            // Advance each typist by one turn
-            seat1JustMistyped = advanceTypist(seat1Typist);
-            seat2JustMistyped = advanceTypist(seat2Typist);
-            seat3JustMistyped = advanceTypist(seat3Typist);
-
-
-            // Print the current state of the race
-            printRace();
-
-            // Check if any typist has finished the passage
-            if (raceFinishedBy(seat1Typist))
-            {
-                winner = seat1Typist;
-                finished = true;
-            }
-            else if (raceFinishedBy(seat2Typist))
-            {
-                winner = seat2Typist;
-                finished = true;
-            }
-            else if (raceFinishedBy(seat3Typist))
-            {
-                winner = seat3Typist;
-                finished = true;
-            }
-
-            if (!finished)
-            {
-                // Wait 200ms between turns so the animation is visible
-                try
-                {
-                    TimeUnit.MILLISECONDS.sleep(200);
-                }
-                catch (InterruptedException e)
-                {
-                    Thread.currentThread().interrupt();
-                }
-            }
+            typist.resetToStart();
         }
+
+        clearMistypeFlags();
+        raceStarted = true;
+        raceFinished = false;
+        turnNumber = 0;
+        winner = null;
+        return true;
+    }
+
+    /**
+     * Advances the race by one turn.
+     * Each seated typist gets one chance to type, mistype, or burn out.
+     *
+     * @return true when the race has finished after this turn
+     */
+    public boolean advanceRace()
+    {
+        if (!raceStarted || raceFinished)
+        {
+            return raceFinished;
+        }
+
+        turnNumber++;
+        clearMistypeFlags();
+
+        for (int seatIndex = 0; seatIndex < typists.length; seatIndex++)
+        {
+            justMistyped[seatIndex] = advanceTypist(typists[seatIndex]);
+        }
+
+        winner = findWinner();
 
         if (winner != null)
         {
-            double oldAccuracy = winner.getAccuracy();
-            winner.setAccuracy(oldAccuracy + WINNER_ACCURACY_BONUS);
-
-            System.out.println("And the winner is... " + winner.getName() + "!");
-            System.out.printf(
-                "Final accuracy: %.2f (improved from %.2f)%n",
-                winner.getAccuracy(),
-                oldAccuracy
-            );
+            raceFinished = true;
+            winner.setAccuracy(winner.getAccuracy() + WINNER_ACCURACY_BONUS);
         }
 
+        return raceFinished;
     }
 
     /**
-     * Simulates one turn for a typist.
+     * Returns true when all seats contain a typist.
      *
-     * If the typist is burnt out, they recover one turn's worth and skip typing.
-     * Otherwise:
-     *   - They may type a character (advancing progress) based on their accuracy.
-     *   - They may mistype (sliding back) — the chance of a mistype should decrease
-     *     for more accurate typists.
-     *   - They may burn out — more likely for very high-accuracy typists
-     *     who are pushing themselves too hard.
+     * @return true if every seat is filled
+     */
+    public boolean allSeatsFilled()
+    {
+        for (Typist typist : typists)
+        {
+            if (typist == null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Returns the passage text for display in the GUI.
+     *
+     * @return the passage text
+     */
+    public String getPassageText()
+    {
+        return passageText;
+    }
+
+    /**
+     * Returns the number of characters in the passage.
+     *
+     * @return the passage length
+     */
+    public int getPassageLength()
+    {
+        return passageLength;
+    }
+
+    /**
+     * Returns the number of seats in this race.
+     *
+     * @return the seat count
+     */
+    public int getSeatCount()
+    {
+        return typists.length;
+    }
+
+    /**
+     * Returns a copy of the typist array so the GUI can inspect it safely.
+     *
+     * @return the current typists in seat order
+     */
+    public Typist[] getTypists()
+    {
+        return typists.clone();
+    }
+
+    /**
+     * Returns the typist in a specific seat.
+     *
+     * @param seatNumber the seat number, starting from 1
+     * @return the typist in that seat, or null if the seat number is invalid
+     */
+    public Typist getTypist(int seatNumber)
+    {
+        int seatIndex = seatNumber - 1;
+
+        if (seatIndex < 0 || seatIndex >= typists.length)
+        {
+            return null;
+        }
+
+        return typists[seatIndex];
+    }
+
+    /**
+     * Reports whether a given seat mistyped on the most recent turn.
+     *
+     * @param seatNumber the seat number, starting from 1
+     * @return true if that typist just mistyped
+     */
+    public boolean didSeatJustMistype(int seatNumber)
+    {
+        int seatIndex = seatNumber - 1;
+
+        if (seatIndex < 0 || seatIndex >= justMistyped.length)
+        {
+            return false;
+        }
+
+        return justMistyped[seatIndex];
+    }
+
+    /**
+     * Returns whether the race has started.
+     *
+     * @return true if startRace has been called successfully
+     */
+    public boolean hasStarted()
+    {
+        return raceStarted;
+    }
+
+    /**
+     * Returns whether the race has finished.
+     *
+     * @return true if a winner has been found
+     */
+    public boolean isFinished()
+    {
+        return raceFinished;
+    }
+
+    /**
+     * Returns the number of turns completed so far.
+     *
+     * @return the current turn number
+     */
+    public int getTurnNumber()
+    {
+        return turnNumber;
+    }
+
+    /**
+     * Returns the winner of the race, or null if there is none yet.
+     *
+     * @return the winning typist
+     */
+    public Typist getWinner()
+    {
+        return winner;
+    }
+
+    /**
+     * Enables or disables the autocorrect modifier.
+     *
+     * @param enabled true to enable autocorrect
+     */
+    public void setAutocorrectEnabled(boolean enabled)
+    {
+        autocorrectEnabled = enabled;
+    }
+
+    /**
+     * Enables or disables the caffeine mode modifier.
+     *
+     * @param enabled true to enable caffeine mode
+     */
+    public void setCaffeineModeEnabled(boolean enabled)
+    {
+        caffeineModeEnabled = enabled;
+    }
+
+    /**
+     * Enables or disables the night shift modifier.
+     *
+     * @param enabled true to enable night shift
+     */
+    public void setNightShiftEnabled(boolean enabled)
+    {
+        nightShiftEnabled = enabled;
+    }
+
+    /**
+     * Returns whether autocorrect is enabled.
+     *
+     * @return true if autocorrect is on
+     */
+    public boolean isAutocorrectEnabled()
+    {
+        return autocorrectEnabled;
+    }
+
+    /**
+     * Returns whether caffeine mode is enabled.
+     *
+     * @return true if caffeine mode is on
+     */
+    public boolean isCaffeineModeEnabled()
+    {
+        return caffeineModeEnabled;
+    }
+
+    /**
+     * Returns whether night shift is enabled.
+     *
+     * @return true if night shift is on
+     */
+    public boolean isNightShiftEnabled()
+    {
+        return nightShiftEnabled;
+    }
+
+    /**
+     * Simulates one turn for a single typist.
      *
      * @param theTypist the typist to advance
+     * @return true if they mistyped on this turn
      */
     private boolean advanceTypist(Typist theTypist)
     {
@@ -190,142 +373,152 @@ public class TypingRace
             return false;
         }
 
-        boolean justMistyped = false;
+        boolean seatJustMistyped = false;
+        double typingChance = getTypingChance(theTypist);
 
-        if (Math.random() < theTypist.getAccuracy())
+        if (Math.random() < typingChance)
         {
             theTypist.typeCharacter();
         }
-        else
+        else if (Math.random() < MISTYPE_BASE_CHANCE)
         {
-            if (Math.random() < MISTYPE_BASE_CHANCE)
-            {
-                theTypist.slideBack(SLIDE_BACK_AMOUNT);
-                justMistyped = true;
-            }
+            theTypist.slideBack(getSlideBackAmount());
+            seatJustMistyped = true;
         }
 
-        if (Math.random() < 0.05 * theTypist.getAccuracy() * theTypist.getAccuracy())
+        if (Math.random() < getBurnoutChance(theTypist))
         {
             theTypist.burnOut(BURNOUT_DURATION);
             theTypist.setAccuracy(theTypist.getAccuracy() - BURNOUT_ACCURACY_PENALTY);
         }
 
-        return justMistyped;
-    }
-
-
-    /**
-     * Returns true if the given typist has completed the full passage.
-     *
-     * @param theTypist the typist to check
-     * @return true if their progress has reached or passed the passage length
-     */
-        private boolean raceFinishedBy(Typist theTypist)
-    {
-        if (theTypist == null)
-        {
-            return false;
-        }
-
-        return theTypist.getProgress() >= passageLength;
+        return seatJustMistyped;
     }
 
     /**
-     * Prints the current state of the race to the terminal.
-     * Shows each typist's position along the passage, burnout state,
+     * Returns the current chance that a typist will type a character.
+     *
+     * @param theTypist the typist being checked
+     * @return the typing chance for this turn
      */
-    private void printRace()
+    private double getTypingChance(Typist theTypist)
     {
-        System.out.print('\u000C'); // Clear terminal
+        double typingChance = theTypist.getAccuracy();
 
-        System.out.println("  TYPING RACE - passage length: " + passageLength + " chars");
-        multiplePrint('=', passageLength + 3);
-        System.out.println();
+        if (nightShiftEnabled)
+        {
+            typingChance = typingChance - NIGHT_SHIFT_ACCURACY_PENALTY;
+        }
 
-        printSeat(seat1Typist, seat1JustMistyped);
-        System.out.println();
+        if (caffeineModeEnabled && turnNumber <= CAFFEINE_BOOST_TURNS)
+        {
+            typingChance = typingChance + CAFFEINE_TYPING_BONUS;
+        }
 
-        printSeat(seat2Typist, seat2JustMistyped);
-        System.out.println();
-
-        printSeat(seat3Typist, seat3JustMistyped);
-        System.out.println();
-
-        multiplePrint('=', passageLength + 3);
-        System.out.println();
-        System.out.println("  [~] = burnt out    [<] = just mistyped");
+        return clampProbability(typingChance);
     }
 
     /**
-     * Prints a single typist's lane.
+     * Returns the chance that a typist burns out on the current turn.
      *
-     * Examples:
-     *   |          ⌨           | TURBOFINGERS (Accuracy: 0.85)
-     *   |    [~]              | HUNT_N_PECK  (Accuracy: 0.40) BURNT OUT (2 turns)
-     *
-     * Note: Ty forgot to show when a typist has just mistyped. That would
-     * be a nice improvement — perhaps a [<] marker after their symbol.
-     *
-     * @param theTypist the typist whose lane to print
+     * @param theTypist the typist being checked
+     * @return the burnout chance for this turn
      */
-    private void printSeat(Typist theTypist, boolean justMistyped)
+    private double getBurnoutChance(Typist theTypist)
     {
-        int spacesBefore = theTypist.getProgress();
-        int spacesAfter  = passageLength - theTypist.getProgress();
+        double burnoutChance = 0.05 * theTypist.getAccuracy() * theTypist.getAccuracy();
 
-        System.out.print('|');
-        multiplePrint(' ', spacesBefore);
-
-        System.out.print(theTypist.getSymbol());
-
-        if (theTypist.isBurntOut())
+        if (caffeineModeEnabled && turnNumber > CAFFEINE_BOOST_TURNS)
         {
-            System.out.print('~');
-            spacesAfter--;
+            burnoutChance = burnoutChance * CAFFEINE_BURNOUT_MULTIPLIER;
         }
 
-        if (justMistyped)
+        return clampProbability(burnoutChance);
+    }
+
+    /**
+     * Returns the number of spaces to slide back after a mistype.
+     *
+     * @return the current slide-back amount
+     */
+    private int getSlideBackAmount()
+    {
+        if (autocorrectEnabled)
         {
-            System.out.print(" [<]");
-            spacesAfter = spacesAfter - 4;
+            return 1;
         }
 
-        multiplePrint(' ', Math.max(0, spacesAfter));
-        System.out.print('|');
-        System.out.print(' ');
+        return SLIDE_BACK_AMOUNT;
+    }
 
-        System.out.printf("%s (Accuracy: %.2f)",
-            theTypist.getName(),
-            theTypist.getAccuracy());
-
-        if (justMistyped)
+    /**
+     * Searches for the first typist who has finished the full passage.
+     *
+     * @return the winning typist, or null if nobody has finished yet
+     */
+    private Typist findWinner()
+    {
+        for (Typist typist : typists)
         {
-            System.out.print(" \u2190 just mistyped");
+            if (typist != null && typist.getProgress() >= passageLength)
+            {
+                return typist;
+            }
         }
 
-        if (theTypist.isBurntOut())
+        return null;
+    }
+
+    /**
+     * Clears the recent mistype markers ready for the next turn.
+     */
+    private void clearMistypeFlags()
+    {
+        for (int i = 0; i < justMistyped.length; i++)
         {
-            System.out.print(" BURNT OUT ("
-                + theTypist.getBurnoutTurnsRemaining()
-                + " turns)");
+            justMistyped[i] = false;
         }
     }
 
+    /**
+     * Forces the seat count into the supported range.
+     *
+     * @param seatCount the requested seat count
+     * @return a seat count between 2 and 6
+     */
+    private int clampSeatCount(int seatCount)
+    {
+        if (seatCount < MIN_SEAT_COUNT)
+        {
+            return MIN_SEAT_COUNT;
+        }
+
+        if (seatCount > MAX_SEAT_COUNT)
+        {
+            return MAX_SEAT_COUNT;
+        }
+
+        return seatCount;
+    }
 
     /**
-     * Prints a character a given number of times.
+     * Clamps a probability into the valid range 0.0 to 1.0.
      *
-     * @param aChar the character to print
-     * @param times how many times to print it
+     * @param value the probability to clamp
+     * @return the clamped probability
      */
-    private void multiplePrint(char aChar, int times)
+    private double clampProbability(double value)
     {
-        int i = 0;
-        while (i < times)
+        if (value < 0.0)
         {
-            System.out.print(aChar);
-            i = i + 1;
+            return 0.0;
         }
+
+        if (value > 1.0)
+        {
+            return 1.0;
+        }
+
+        return value;
     }
 }

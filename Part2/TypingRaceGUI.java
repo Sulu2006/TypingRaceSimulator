@@ -43,32 +43,55 @@ public class TypingRaceGUI extends JFrame
         configPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         configPanel.add(new JLabel("Passage:"));
+
         passageChoiceBox = new JComboBox<>(new String[] {
             "Short Passage",
             "Medium Passage",
             "Long Passage",
             "Custom Passage"
         });
+
         configPanel.add(passageChoiceBox);
 
         configPanel.add(new JLabel("Custom Passage:"));
+
         customPassageArea = new JTextArea(3, 20);
+        customPassageArea.setEnabled(false);
+
         JScrollPane customScrollPane = new JScrollPane(customPassageArea);
         configPanel.add(customScrollPane);
 
+        passageChoiceBox.addActionListener(e -> {
+            String selectedChoice = (String) passageChoiceBox.getSelectedItem();
+
+            if (selectedChoice.equals("Custom Passage"))
+            {
+                customPassageArea.setEnabled(true);
+            }
+            else
+            {
+                customPassageArea.setEnabled(false);
+                customPassageArea.setText("");
+            }
+        });
+
         configPanel.add(new JLabel("Number of Typists:"));
+
         seatCountSpinner = new JSpinner(new SpinnerNumberModel(3, 2, 6, 1));
         configPanel.add(seatCountSpinner);
 
         configPanel.add(new JLabel("Autocorrect:"));
+
         autocorrectBox = new JCheckBox("Slide-back is reduced");
         configPanel.add(autocorrectBox);
 
         configPanel.add(new JLabel("Caffeine Mode:"));
+
         caffeineModeBox = new JCheckBox("Early boost, higher burnout risk");
         configPanel.add(caffeineModeBox);
 
         configPanel.add(new JLabel("Night Shift:"));
+
         nightShiftBox = new JCheckBox("Accuracy reduced");
         configPanel.add(nightShiftBox);
 
