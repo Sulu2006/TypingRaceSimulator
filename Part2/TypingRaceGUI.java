@@ -6,6 +6,7 @@ public class TypingRaceGUI extends JFrame
     private static final String SETUP_CARD = "setup";
     private static final String RACE_CARD = "race";
     private static final int TRACK_DISPLAY_LENGTH = 40;
+    private static final int PASSAGE_HTML_WIDTH = 680;
 
     private static final String[] DEFAULT_TYPING_NAMES = {
         "TURBOFINGERS",
@@ -17,9 +18,8 @@ public class TypingRaceGUI extends JFrame
     };
 
     private static final char[] DEFAULT_TYPING_SYMBOLS = {
-        '①', '②', '③', '④', '⑤', '⑥'
+        '\u2460', '\u2461', '\u2462', '\u2463', '\u2464', '\u2465'
     };
-
 
     private static final double[] DEFAULT_TYPING_ACCURACIES = {
         0.85, 0.75, 0.65, 0.55, 0.45, 0.35
@@ -42,10 +42,13 @@ public class TypingRaceGUI extends JFrame
     private JTextArea passageDisplayArea;
     private JPanel raceLanesPanel;
     private JLabel turnLabel;
+    private JLabel modifierLabel;
     private JLabel raceStatusLabel;
     private JButton backButton;
 
-    private JLabel[] laneLabels;
+    private JLabel[] laneHeaderLabels;
+    private JLabel[] laneTrackLabels;
+    private JLabel[] lanePassageLabels;
     private Timer raceTimer;
     private TypingRace currentRace;
 
@@ -58,7 +61,7 @@ public class TypingRaceGUI extends JFrame
     public TypingRaceGUI()
     {
         setTitle("Typing Race GUI");
-        setSize(850, 600);
+        setSize(900, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -172,25 +175,28 @@ public class TypingRaceGUI extends JFrame
         raceTitleLabel.setFont(new Font("Arial", Font.BOLD, 20));
 
         turnLabel = new JLabel("Turn: 0", SwingConstants.CENTER);
+        modifierLabel = new JLabel("", SwingConstants.CENTER);
 
-        JPanel topPanel = new JPanel(new BorderLayout());
-        topPanel.add(raceTitleLabel, BorderLayout.NORTH);
-        topPanel.add(turnLabel, BorderLayout.SOUTH);
+        JPanel topPanel = new JPanel(new GridLayout(3, 1, 0, 5));
+        topPanel.add(raceTitleLabel);
+        topPanel.add(turnLabel);
+        topPanel.add(modifierLabel);
 
         passageDisplayArea = new JTextArea(4, 40);
         passageDisplayArea.setEditable(false);
         passageDisplayArea.setLineWrap(true);
         passageDisplayArea.setWrapStyleWord(true);
         passageDisplayArea.setFont(new Font("Arial", Font.PLAIN, 15));
+        passageDisplayArea.setBackground(new Color(245, 245, 245));
 
         JScrollPane passageScrollPane = new JScrollPane(passageDisplayArea);
-        passageScrollPane.setBorder(BorderFactory.createTitledBorder("Passage"));
+        passageScrollPane.setBorder(BorderFactory.createTitledBorder("Selected Passage"));
 
         raceLanesPanel = new JPanel();
         raceLanesPanel.setLayout(new BoxLayout(raceLanesPanel, BoxLayout.Y_AXIS));
 
         JScrollPane laneScrollPane = new JScrollPane(raceLanesPanel);
-        laneScrollPane.setBorder(BorderFactory.createTitledBorder("Typists"));
+        laneScrollPane.setBorder(BorderFactory.createTitledBorder("Typist Progress"));
 
         JPanel centerPanel = new JPanel(new BorderLayout(10, 10));
         centerPanel.add(passageScrollPane, BorderLayout.NORTH);
@@ -262,26 +268,52 @@ public class TypingRaceGUI extends JFrame
     private void prepareRaceScreen()
     {
         passageDisplayArea.setText(currentRace.getPassageText());
+        passageDisplayArea.setCaretPosition(0);
         turnLabel.setText("Turn: 0");
+        modifierLabel.setText(buildModifierSummary());
         raceStatusLabel.setText("Race in progress...");
 
-        buildLaneLabels();
+        buildLanePanels();
         updateRaceScreen();
     }
 
-    private void buildLaneLabels()
+    private void buildLanePanels()
     {
         raceLanesPanel.removeAll();
-        laneLabels = new JLabel[currentRace.getSeatCount()];
+        laneHeaderLabels = new JLabel[currentRace.getSeatCount()];
+        laneTrackLabels = new JLabel[currentRace.getSeatCount()];
+        lanePassageLabels = new JLabel[currentRace.getSeatCount()];
 
-        for (int i = 0; i < laneLabels.length; i++)
+        for (int i = 0; i < laneHeaderLabels.length; i++)
         {
-            JLabel laneLabel = new JLabel();
-            laneLabel.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
-            laneLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            JPanel lanePanel = new JPanel(new BorderLayout(5, 5));
+            lanePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            lanePanel.setBackground(Color.WHITE);
+            lanePanel.setOpaque(true);
+            lanePanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200)),
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+            ));
 
-            laneLabels[i] = laneLabel;
-            raceLanesPanel.add(laneLabel);
+            JLabel headerLabel = new JLabel();
+            headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+            JLabel trackLabel = new JLabel();
+            trackLabel.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 14));
+
+            JLabel passageLabel = new JLabel();
+            passageLabel.setFont(new Font("Arial", Font.PLAIN, 13));
+            passageLabel.setVerticalAlignment(SwingConstants.TOP);
+
+            laneHeaderLabels[i] = headerLabel;
+            laneTrackLabels[i] = trackLabel;
+            lanePassageLabels[i] = passageLabel;
+
+            lanePanel.add(headerLabel, BorderLayout.NORTH);
+            lanePanel.add(trackLabel, BorderLayout.CENTER);
+            lanePanel.add(passageLabel, BorderLayout.SOUTH);
+
+            raceLanesPanel.add(lanePanel);
             raceLanesPanel.add(Box.createVerticalStrut(10));
         }
 
@@ -322,7 +354,9 @@ public class TypingRaceGUI extends JFrame
         for (int seatNumber = 1; seatNumber <= currentRace.getSeatCount(); seatNumber++)
         {
             Typist typist = currentRace.getTypist(seatNumber);
-            laneLabels[seatNumber - 1].setText(buildLaneText(typist, seatNumber));
+            laneHeaderLabels[seatNumber - 1].setText(buildLaneHeaderText(typist, seatNumber));
+            laneTrackLabels[seatNumber - 1].setText(buildTrackText(typist));
+            lanePassageLabels[seatNumber - 1].setText(buildPassageProgressHtml(typist));
         }
 
         if (currentRace.isFinished())
@@ -341,13 +375,16 @@ public class TypingRaceGUI extends JFrame
         }
     }
 
-    private String buildLaneText(Typist typist, int seatNumber)
+    private String buildLaneHeaderText(Typist typist, int seatNumber)
     {
         StringBuilder laneText = new StringBuilder();
+        laneText.append("Seat ");
+        laneText.append(seatNumber);
+        laneText.append("  ");
+        laneText.append(typist.getSymbol());
+        laneText.append("  ");
         laneText.append(typist.getName());
-        laneText.append("  ");
-        laneText.append(buildTrackText(typist));
-        laneText.append("  ");
+        laneText.append("  Progress: ");
         laneText.append(typist.getProgress());
         laneText.append("/");
         laneText.append(currentRace.getPassageLength());
@@ -365,6 +402,50 @@ public class TypingRaceGUI extends JFrame
         }
 
         return laneText.toString();
+    }
+
+    private String buildPassageProgressHtml(Typist typist)
+    {
+        String passage = currentRace.getPassageText();
+        int progress = typist.getProgress();
+
+        if (progress < 0)
+        {
+            progress = 0;
+        }
+        else if (progress > passage.length())
+        {
+            progress = passage.length();
+        }
+
+        String typedText = escapeHtml(passage.substring(0, progress));
+        String currentText = "";
+        String remainingText;
+
+        if (progress < passage.length())
+        {
+            currentText = escapeHtml(passage.substring(progress, progress + 1));
+            remainingText = escapeHtml(passage.substring(progress + 1));
+        }
+        else
+        {
+            remainingText = "";
+        }
+
+        return "<html><div style='width:"
+            + PASSAGE_HTML_WIDTH
+            + "px; font-family:Arial; font-size:12px;'>"
+            + "<span style='color:#2e8b57; font-weight:bold;'>"
+            + typedText
+            + "</span>"
+            + (currentText.isEmpty()
+                ? ""
+                : "<span style='background-color:#ffe599; color:#1f1f1f; font-weight:bold;'>"
+                    + currentText
+                    + "</span>")
+            + "<span style='color:#333333;'>"
+            + remainingText
+            + "</span></div></html>";
     }
 
     private String buildTrackText(Typist typist)
@@ -393,7 +474,7 @@ public class TypingRaceGUI extends JFrame
         }
 
         StringBuilder trackText = new StringBuilder();
-        trackText.append('|');
+        trackText.append("Track  |");
 
         for (int i = 0; i < TRACK_DISPLAY_LENGTH; i++)
         {
@@ -411,11 +492,52 @@ public class TypingRaceGUI extends JFrame
         return trackText.toString();
     }
 
+    private String buildModifierSummary()
+    {
+        return "<html>Modifiers: "
+            + (autocorrectOn
+                ? "<span style='color:#2e8b57;'>Autocorrect ON</span> (slide-back 1)"
+                : "<span style='color:#666666;'>Autocorrect OFF</span> (slide-back 2)")
+            + "  |  "
+            + (caffeineModeOn
+                ? "<span style='color:#2e8b57;'>Caffeine ON</span> (+speed first 10 turns, more burnout later)"
+                : "<span style='color:#666666;'>Caffeine OFF</span>")
+            + "  |  "
+            + (nightShiftOn
+                ? "<span style='color:#2e8b57;'>Night Shift ON</span> (-accuracy for everyone)"
+                : "<span style='color:#666666;'>Night Shift OFF</span>")
+            + "</html>";
+    }
+
     private void returnToSetup()
     {
         stopRaceTimer();
         configStatusLabel.setText("Choose race settings, then press Start Race.");
         cardLayout.show(cardPanel, SETUP_CARD);
+    }
+
+    private String escapeHtml(String text)
+    {
+        StringBuilder escapedText = new StringBuilder();
+
+        for (int i = 0; i < text.length(); i++)
+        {
+            char currentCharacter = text.charAt(i);
+
+            switch (currentCharacter) {
+                case '&' -> escapedText.append("&amp;");
+                case '<' -> escapedText.append("&lt;");
+                case '>' -> escapedText.append("&gt;");
+                case '"' -> escapedText.append("&quot;");
+                case '\'' -> escapedText.append("&#39;");
+                case '\n' -> escapedText.append("<br>");
+                case '\r' -> {
+                }
+                default -> escapedText.append(currentCharacter);
+            }
+        }
+
+        return escapedText.toString();
     }
 
     private String getSelectedPassage()
