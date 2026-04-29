@@ -1,3 +1,5 @@
+package Part1;
+
 /**
  * Represents one competitor in the typing race.
  * A typist stores their identity, current progress, accuracy,

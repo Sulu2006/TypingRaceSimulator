@@ -1,3 +1,5 @@
+package Part2;
+
 import java.awt.*;
 import javax.swing.*;
 
@@ -25,6 +27,36 @@ public class TypingRaceGUI extends JFrame
         0.85, 0.75, 0.65, 0.55, 0.45, 0.35
     };
 
+    private static final String[] TYPING_STYLE_CHOICES = {
+        "Touch Typist",
+        "Hunt & Peck",
+        "Phone Thumbs",
+        "Voice-to-Text"
+    };
+
+    private static final String[] KEYBOARD_TYPE_CHOICES = {
+        "Mechanical",
+        "Membrane",
+        "Touchscreen",
+        "Stenography"
+    };
+
+    private static final String[] COLOUR_CHOICES = {
+        "Green",
+        "Blue",
+        "Red",
+        "Orange",
+        "Purple",
+        "Black"
+    };
+
+    private static final String[] ACCESSORY_CHOICES = {
+        "None",
+        "Wrist Support",
+        "Energy Drink",
+        "Noise-Cancelling Headphones"
+    };
+
     private CardLayout cardLayout;
     private JPanel cardPanel;
 
@@ -35,6 +67,14 @@ public class TypingRaceGUI extends JFrame
     private JCheckBox autocorrectBox;
     private JCheckBox caffeineModeBox;
     private JCheckBox nightShiftBox;
+
+    private JPanel typistCustomisationPanel;
+    private JPanel[] typistConfigPanels;
+    private JComboBox<String>[] typingStyleBoxes;
+    private JComboBox<String>[] keyboardTypeBoxes;
+    private JComboBox<String>[] colourBoxes;
+    private JComboBox<String>[] accessoryBoxes;
+    private JTextField[] symbolFields;
 
     private JButton startButton;
     private JLabel configStatusLabel;
@@ -52,6 +92,8 @@ public class TypingRaceGUI extends JFrame
     private Timer raceTimer;
     private TypingRace currentRace;
 
+    private Color[] activeTypistColours;
+
     private String selectedPassage;
     private int selectedSeatCount;
     private boolean autocorrectOn;
@@ -61,7 +103,7 @@ public class TypingRaceGUI extends JFrame
     public TypingRaceGUI()
     {
         setTitle("Typing Race GUI");
-        setSize(900, 650);
+        setSize(950, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -145,12 +187,18 @@ public class TypingRaceGUI extends JFrame
         nightShiftBox = new JCheckBox("Accuracy reduced");
         configPanel.add(nightShiftBox);
 
+        JPanel centrePanel = new JPanel(new BorderLayout(10, 10));
+        centrePanel.add(configPanel, BorderLayout.NORTH);
+        centrePanel.add(buildTypistCustomisationScrollPane(), BorderLayout.CENTER);
+
+        seatCountSpinner.addChangeListener(e -> updateTypistCustomisationVisibility());
+
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(0, 20, 20, 20));
 
         startButton = new JButton("Start Race");
         configStatusLabel = new JLabel(
-            "Choose race settings, then press Start Race.",
+            "Choose race settings, customise your typists, then press Start Race.",
             SwingConstants.CENTER
         );
 
@@ -158,12 +206,72 @@ public class TypingRaceGUI extends JFrame
         bottomPanel.add(configStatusLabel, BorderLayout.SOUTH);
 
         mainPanel.add(titleLabel, BorderLayout.NORTH);
-        mainPanel.add(configPanel, BorderLayout.CENTER);
+        mainPanel.add(centrePanel, BorderLayout.CENTER);
         mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
         startButton.addActionListener(e -> startConfiguredRace());
 
         return mainPanel;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JScrollPane buildTypistCustomisationScrollPane()
+    {
+        typistCustomisationPanel = new JPanel();
+        typistCustomisationPanel.setLayout(new BoxLayout(typistCustomisationPanel, BoxLayout.Y_AXIS));
+        typistCustomisationPanel.setBorder(BorderFactory.createTitledBorder("Typist Customisation"));
+
+        typistConfigPanels = new JPanel[DEFAULT_TYPING_NAMES.length];
+        typingStyleBoxes = new JComboBox[DEFAULT_TYPING_NAMES.length];
+        keyboardTypeBoxes = new JComboBox[DEFAULT_TYPING_NAMES.length];
+        colourBoxes = new JComboBox[DEFAULT_TYPING_NAMES.length];
+        accessoryBoxes = new JComboBox[DEFAULT_TYPING_NAMES.length];
+        symbolFields = new JTextField[DEFAULT_TYPING_NAMES.length];
+
+        for (int i = 0; i < DEFAULT_TYPING_NAMES.length; i++)
+        {
+            JPanel seatPanel = new JPanel(new GridLayout(5, 2, 8, 8));
+            seatPanel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder("Seat " + (i + 1) + " - " + DEFAULT_TYPING_NAMES[i]),
+                BorderFactory.createEmptyBorder(6, 6, 6, 6)
+            ));
+
+            JTextField symbolField = new JTextField(String.valueOf(DEFAULT_TYPING_SYMBOLS[i]));
+            JComboBox<String> styleBox = new JComboBox<>(TYPING_STYLE_CHOICES);
+            JComboBox<String> keyboardBox = new JComboBox<>(KEYBOARD_TYPE_CHOICES);
+            JComboBox<String> colourBox = new JComboBox<>(COLOUR_CHOICES);
+            JComboBox<String> accessoryBox = new JComboBox<>(ACCESSORY_CHOICES);
+
+            symbolField.setColumns(2);
+            colourBox.setSelectedIndex(i % COLOUR_CHOICES.length);
+
+            symbolFields[i] = symbolField;
+            typingStyleBoxes[i] = styleBox;
+            keyboardTypeBoxes[i] = keyboardBox;
+            colourBoxes[i] = colourBox;
+            accessoryBoxes[i] = accessoryBox;
+            typistConfigPanels[i] = seatPanel;
+
+            seatPanel.add(new JLabel("Symbol:"));
+            seatPanel.add(symbolField);
+            seatPanel.add(new JLabel("Typing Style:"));
+            seatPanel.add(styleBox);
+            seatPanel.add(new JLabel("Keyboard Type:"));
+            seatPanel.add(keyboardBox);
+            seatPanel.add(new JLabel("Colour:"));
+            seatPanel.add(colourBox);
+            seatPanel.add(new JLabel("Accessory:"));
+            seatPanel.add(accessoryBox);
+
+            typistCustomisationPanel.add(seatPanel);
+        }
+
+        updateTypistCustomisationVisibility();
+
+        JScrollPane customisationScrollPane = new JScrollPane(typistCustomisationPanel);
+        customisationScrollPane.setBorder(BorderFactory.createEmptyBorder(0, 20, 10, 20));
+        customisationScrollPane.getVerticalScrollBar().setUnitIncrement(12);
+        return customisationScrollPane;
     }
 
     private JPanel buildRacePanel()
@@ -232,12 +340,14 @@ public class TypingRaceGUI extends JFrame
         caffeineModeOn = caffeineModeBox.isSelected();
         nightShiftOn = nightShiftBox.isSelected();
 
+        activeTypistColours = new Color[selectedSeatCount];
+
         currentRace = new TypingRace(selectedPassage, selectedSeatCount);
         currentRace.setAutocorrectEnabled(autocorrectOn);
         currentRace.setCaffeineModeEnabled(caffeineModeOn);
         currentRace.setNightShiftEnabled(nightShiftOn);
 
-        addDefaultTypistsToRace();
+        addConfiguredTypistsToRace();
 
         if (!currentRace.startRace())
         {
@@ -250,19 +360,50 @@ public class TypingRaceGUI extends JFrame
         startRaceTimer();
     }
 
-    private void addDefaultTypistsToRace()
+    private void addConfiguredTypistsToRace()
     {
         for (int seatNumber = 1; seatNumber <= selectedSeatCount; seatNumber++)
         {
             int typistIndex = seatNumber - 1;
             Typist typist = new Typist(
-                DEFAULT_TYPING_SYMBOLS[typistIndex],
+                getSelectedSymbol(typistIndex),
                 DEFAULT_TYPING_NAMES[typistIndex],
                 DEFAULT_TYPING_ACCURACIES[typistIndex]
             );
 
+            applyTypistCustomisation(typist, typistIndex);
             currentRace.addTypist(typist, seatNumber);
         }
+    }
+
+    private void applyTypistCustomisation(Typist typist, int typistIndex)
+    {
+        String typingStyle = (String) typingStyleBoxes[typistIndex].getSelectedItem();
+        String keyboardType = (String) keyboardTypeBoxes[typistIndex].getSelectedItem();
+        String colourChoice = (String) colourBoxes[typistIndex].getSelectedItem();
+        String accessoryChoice = (String) accessoryBoxes[typistIndex].getSelectedItem();
+
+        double updatedAccuracy = typist.getAccuracy()
+            + getTypingStyleAccuracyBonus(typingStyle)
+            + getKeyboardAccuracyBonus(keyboardType)
+            + getAccessoryAccuracyBonus(accessoryChoice);
+
+        typist.setAccuracy(updatedAccuracy);
+        typist.setTypingBonus(
+            getTypingStyleSpeedBonus(typingStyle)
+            + getKeyboardSpeedBonus(keyboardType)
+            + getAccessorySpeedBonus(accessoryChoice)
+        );
+        typist.setMistypeChanceMultiplier(
+            getKeyboardMistypeMultiplier(keyboardType)
+            * getAccessoryMistypeMultiplier(accessoryChoice)
+        );
+        typist.setBurnoutChanceMultiplier(
+            getTypingStyleBurnoutMultiplier(typingStyle)
+            * getAccessoryBurnoutMultiplier(accessoryChoice)
+        );
+
+        activeTypistColours[typistIndex] = getColourValue(colourChoice);
     }
 
     private void prepareRaceScreen()
@@ -353,10 +494,15 @@ public class TypingRaceGUI extends JFrame
 
         for (int seatNumber = 1; seatNumber <= currentRace.getSeatCount(); seatNumber++)
         {
+            int seatIndex = seatNumber - 1;
             Typist typist = currentRace.getTypist(seatNumber);
-            laneHeaderLabels[seatNumber - 1].setText(buildLaneHeaderText(typist, seatNumber));
-            laneTrackLabels[seatNumber - 1].setText(buildTrackText(typist));
-            lanePassageLabels[seatNumber - 1].setText(buildPassageProgressHtml(typist));
+            Color typistColour = activeTypistColours[seatIndex];
+
+            laneHeaderLabels[seatIndex].setText(buildLaneHeaderText(typist, seatNumber));
+            laneHeaderLabels[seatIndex].setForeground(typistColour);
+            laneTrackLabels[seatIndex].setText(buildTrackText(typist));
+            laneTrackLabels[seatIndex].setForeground(typistColour);
+            lanePassageLabels[seatIndex].setText(buildPassageProgressHtml(typist, seatIndex));
         }
 
         if (currentRace.isFinished())
@@ -404,7 +550,7 @@ public class TypingRaceGUI extends JFrame
         return laneText.toString();
     }
 
-    private String buildPassageProgressHtml(Typist typist)
+    private String buildPassageProgressHtml(Typist typist, int seatIndex)
     {
         String passage = currentRace.getPassageText();
         int progress = typist.getProgress();
@@ -435,7 +581,9 @@ public class TypingRaceGUI extends JFrame
         return "<html><div style='width:"
             + PASSAGE_HTML_WIDTH
             + "px; font-family:Arial; font-size:12px;'>"
-            + "<span style='color:#2e8b57; font-weight:bold;'>"
+            + "<span style='color:"
+            + getHexColour(activeTypistColours[seatIndex])
+            + "; font-weight:bold;'>"
             + typedText
             + "</span>"
             + (currentText.isEmpty()
@@ -509,10 +657,153 @@ public class TypingRaceGUI extends JFrame
             + "</html>";
     }
 
+    private void updateTypistCustomisationVisibility()
+    {
+        int visibleSeatCount = (int) seatCountSpinner.getValue();
+
+        for (int i = 0; i < typistConfigPanels.length; i++)
+        {
+            typistConfigPanels[i].setVisible(i < visibleSeatCount);
+        }
+
+        typistCustomisationPanel.revalidate();
+        typistCustomisationPanel.repaint();
+    }
+
+    private char getSelectedSymbol(int typistIndex)
+    {
+        String symbolText = symbolFields[typistIndex].getText().trim();
+
+        if (symbolText.isEmpty())
+        {
+            return DEFAULT_TYPING_SYMBOLS[typistIndex];
+        }
+
+        return symbolText.charAt(0);
+    }
+
+    private double getTypingStyleAccuracyBonus(String typingStyle)
+    {
+        return switch (typingStyle) {
+            case "Touch Typist" -> 0.08;
+            case "Hunt & Peck" -> -0.05;
+            case "Phone Thumbs" -> -0.10;
+            case "Voice-to-Text" -> 0.12;
+            default -> 0.0;
+        };
+    }
+
+    private double getTypingStyleSpeedBonus(String typingStyle)
+    {
+        return switch (typingStyle) {
+            case "Touch Typist" -> 0.08;
+            case "Hunt & Peck" -> -0.03;
+            case "Phone Thumbs" -> -0.02;
+            case "Voice-to-Text" -> 0.15;
+            default -> 0.0;
+        };
+    }
+
+    private double getTypingStyleBurnoutMultiplier(String typingStyle)
+    {
+        return switch (typingStyle) {
+            case "Touch Typist" -> 1.10;
+            case "Hunt & Peck" -> 0.80;
+            case "Phone Thumbs" -> 0.90;
+            case "Voice-to-Text" -> 1.25;
+            default -> 1.0;
+        };
+    }
+
+    private double getKeyboardAccuracyBonus(String keyboardType)
+    {
+        return switch (keyboardType) {
+            case "Mechanical" -> 0.05;
+            case "Membrane" -> 0.0;
+            case "Touchscreen" -> -0.08;
+            case "Stenography" -> 0.10;
+            default -> 0.0;
+        };
+    }
+
+    private double getKeyboardSpeedBonus(String keyboardType)
+    {
+        return switch (keyboardType) {
+            case "Mechanical" -> 0.03;
+            case "Membrane" -> 0.0;
+            case "Touchscreen" -> -0.05;
+            case "Stenography" -> 0.12;
+            default -> 0.0;
+        };
+    }
+
+    private double getKeyboardMistypeMultiplier(String keyboardType)
+    {
+        return switch (keyboardType) {
+            case "Mechanical" -> 0.90;
+            case "Membrane" -> 1.0;
+            case "Touchscreen" -> 1.25;
+            case "Stenography" -> 0.85;
+            default -> 1.0;
+        };
+    }
+
+    private double getAccessoryAccuracyBonus(String accessoryChoice)
+    {
+        return switch (accessoryChoice) {
+            case "Energy Drink" -> 0.04;
+            case "Noise-Cancelling Headphones" -> 0.03;
+            default -> 0.0;
+        };
+    }
+
+    private double getAccessorySpeedBonus(String accessoryChoice)
+    {
+        return switch (accessoryChoice) {
+            case "Energy Drink" -> 0.06;
+            default -> 0.0;
+        };
+    }
+
+    private double getAccessoryMistypeMultiplier(String accessoryChoice)
+    {
+        return switch (accessoryChoice) {
+            case "Noise-Cancelling Headphones" -> 0.75;
+            case "Energy Drink" -> 1.10;
+            default -> 1.0;
+        };
+    }
+
+    private double getAccessoryBurnoutMultiplier(String accessoryChoice)
+    {
+        return switch (accessoryChoice) {
+            case "Wrist Support" -> 0.70;
+            case "Energy Drink" -> 1.30;
+            default -> 1.0;
+        };
+    }
+
+    private Color getColourValue(String colourChoice)
+    {
+        return switch (colourChoice) {
+            case "Blue" -> new Color(30, 144, 255);
+            case "Red" -> new Color(204, 51, 51);
+            case "Orange" -> new Color(255, 140, 0);
+            case "Purple" -> new Color(138, 43, 226);
+            case "Black" -> new Color(34, 34, 34);
+            default -> new Color(46, 139, 87);
+        };
+    }
+
+    private String getHexColour(Color colour)
+    {
+        return String.format("#%02x%02x%02x", colour.getRed(), colour.getGreen(), colour.getBlue());
+    }
+
     private void returnToSetup()
     {
         stopRaceTimer();
-        configStatusLabel.setText("Choose race settings, then press Start Race.");
+        configStatusLabel.setText("Choose race settings, customise your typists, then press Start Race.");
         cardLayout.show(cardPanel, SETUP_CARD);
     }
 

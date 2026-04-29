@@ -1,3 +1,5 @@
+package Part2;
+
 /**
  * A GUI-friendly typing race engine.
  * The GUI can configure the race, start it, and then advance it
@@ -380,7 +382,7 @@ public class TypingRace
         {
             theTypist.typeCharacter();
         }
-        else if (Math.random() < MISTYPE_BASE_CHANCE)
+        else if (Math.random() < getMistypeChance(theTypist))
         {
             theTypist.slideBack(getSlideBackAmount());
             seatJustMistyped = true;
@@ -403,7 +405,7 @@ public class TypingRace
      */
     private double getTypingChance(Typist theTypist)
     {
-        double typingChance = theTypist.getAccuracy();
+        double typingChance = theTypist.getAccuracy() + theTypist.getTypingBonus();
 
         if (nightShiftEnabled)
         {
@@ -419,6 +421,17 @@ public class TypingRace
     }
 
     /**
+     * Returns the chance that a typist mistypes on the current turn.
+     *
+     * @param theTypist the typist being checked
+     * @return the mistype chance for this turn
+     */
+    private double getMistypeChance(Typist theTypist)
+    {
+        return clampProbability(MISTYPE_BASE_CHANCE * theTypist.getMistypeChanceMultiplier());
+    }
+
+    /**
      * Returns the chance that a typist burns out on the current turn.
      *
      * @param theTypist the typist being checked
@@ -426,7 +439,10 @@ public class TypingRace
      */
     private double getBurnoutChance(Typist theTypist)
     {
-        double burnoutChance = 0.05 * theTypist.getAccuracy() * theTypist.getAccuracy();
+        double burnoutChance = 0.05
+            * theTypist.getAccuracy()
+            * theTypist.getAccuracy()
+            * theTypist.getBurnoutChanceMultiplier();
 
         if (caffeineModeEnabled && turnNumber > CAFFEINE_BOOST_TURNS)
         {

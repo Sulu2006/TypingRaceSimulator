@@ -1,3 +1,5 @@
+package Part2;
+
 /**
  * Represents one competitor in the typing race.
  * A typist stores their identity, current progress, accuracy,
@@ -16,6 +18,9 @@ public final class Typist
     private boolean burntOut;
     private int burnoutTurnsRemaining;
     private double accuracy;
+    private double typingBonus;
+    private double mistypeChanceMultiplier;
+    private double burnoutChanceMultiplier;
 
     /**
      * Creates a typist with a display symbol, name, and starting accuracy.
@@ -33,6 +38,9 @@ public final class Typist
         burntOut = false;
         burnoutTurnsRemaining = 0;
         setAccuracy(typistAccuracy);
+        typingBonus = 0.0;
+        mistypeChanceMultiplier = 1.0;
+        burnoutChanceMultiplier = 1.0;
     }
 
     /**
@@ -123,6 +131,36 @@ public final class Typist
     }
 
     /**
+     * Returns the extra typing chance applied to this typist.
+     *
+     * @return the typing bonus value
+     */
+    public double getTypingBonus()
+    {
+        return typingBonus;
+    }
+
+    /**
+     * Returns the multiplier applied to mistype chance.
+     *
+     * @return the mistype chance multiplier
+     */
+    public double getMistypeChanceMultiplier()
+    {
+        return mistypeChanceMultiplier;
+    }
+
+    /**
+     * Returns the multiplier applied to burnout chance.
+     *
+     * @return the burnout chance multiplier
+     */
+    public double getBurnoutChanceMultiplier()
+    {
+        return burnoutChanceMultiplier;
+    }
+
+    /**
      * Restores race state to the starting position without changing
      * the typist's name, symbol, or accuracy.
      */
@@ -204,5 +242,51 @@ public final class Typist
     public void setSymbol(char newSymbol)
     {
         symbol = newSymbol;
+    }
+
+    /**
+     * Changes the extra typing chance given to this typist.
+     *
+     * @param newTypingBonus the replacement typing bonus
+     */
+    public void setTypingBonus(double newTypingBonus)
+    {
+        typingBonus = newTypingBonus;
+    }
+
+    /**
+     * Changes the multiplier applied to mistype chance.
+     * Values below zero are clamped to zero.
+     *
+     * @param newMistypeChanceMultiplier the replacement multiplier
+     */
+    public void setMistypeChanceMultiplier(double newMistypeChanceMultiplier)
+    {
+        if (newMistypeChanceMultiplier < 0.0)
+        {
+            mistypeChanceMultiplier = 0.0;
+        }
+        else
+        {
+            mistypeChanceMultiplier = newMistypeChanceMultiplier;
+        }
+    }
+
+    /**
+     * Changes the multiplier applied to burnout chance.
+     * Values below zero are clamped to zero.
+     *
+     * @param newBurnoutChanceMultiplier the replacement multiplier
+     */
+    public void setBurnoutChanceMultiplier(double newBurnoutChanceMultiplier)
+    {
+        if (newBurnoutChanceMultiplier < 0.0)
+        {
+            burnoutChanceMultiplier = 0.0;
+        }
+        else
+        {
+            burnoutChanceMultiplier = newBurnoutChanceMultiplier;
+        }
     }
 }
