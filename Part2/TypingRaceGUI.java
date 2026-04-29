@@ -75,6 +75,7 @@ public class TypingRaceGUI extends JFrame
     private JComboBox<String>[] colourBoxes;
     private JComboBox<String>[] accessoryBoxes;
     private JTextField[] symbolFields;
+    private JLabel[] impactSummaryLabels;
 
     private JButton startButton;
     private JLabel configStatusLabel;
@@ -227,10 +228,12 @@ public class TypingRaceGUI extends JFrame
         colourBoxes = new JComboBox[DEFAULT_TYPING_NAMES.length];
         accessoryBoxes = new JComboBox[DEFAULT_TYPING_NAMES.length];
         symbolFields = new JTextField[DEFAULT_TYPING_NAMES.length];
+        impactSummaryLabels = new JLabel[DEFAULT_TYPING_NAMES.length];
 
         for (int i = 0; i < DEFAULT_TYPING_NAMES.length; i++)
         {
-            JPanel seatPanel = new JPanel(new GridLayout(5, 2, 8, 8));
+            int configIndex = i;
+            JPanel seatPanel = new JPanel(new GridLayout(6, 2, 8, 8));
             seatPanel.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder("Seat " + (i + 1) + " - " + DEFAULT_TYPING_NAMES[i]),
                 BorderFactory.createEmptyBorder(6, 6, 6, 6)
@@ -241,6 +244,7 @@ public class TypingRaceGUI extends JFrame
             JComboBox<String> keyboardBox = new JComboBox<>(KEYBOARD_TYPE_CHOICES);
             JComboBox<String> colourBox = new JComboBox<>(COLOUR_CHOICES);
             JComboBox<String> accessoryBox = new JComboBox<>(ACCESSORY_CHOICES);
+            JLabel impactLabel = new JLabel();
 
             symbolField.setColumns(2);
             colourBox.setSelectedIndex(i % COLOUR_CHOICES.length);
@@ -250,6 +254,7 @@ public class TypingRaceGUI extends JFrame
             keyboardTypeBoxes[i] = keyboardBox;
             colourBoxes[i] = colourBox;
             accessoryBoxes[i] = accessoryBox;
+            impactSummaryLabels[i] = impactLabel;
             typistConfigPanels[i] = seatPanel;
 
             seatPanel.add(new JLabel("Symbol:"));
@@ -262,6 +267,14 @@ public class TypingRaceGUI extends JFrame
             seatPanel.add(colourBox);
             seatPanel.add(new JLabel("Accessory:"));
             seatPanel.add(accessoryBox);
+            seatPanel.add(new JLabel("Impact:"));
+            seatPanel.add(impactLabel);
+
+            styleBox.addActionListener(e -> updateImpactSummary(configIndex));
+            keyboardBox.addActionListener(e -> updateImpactSummary(configIndex));
+            accessoryBox.addActionListener(e -> updateImpactSummary(configIndex));
+
+            updateImpactSummary(configIndex);
 
             typistCustomisationPanel.add(seatPanel);
         }
@@ -793,6 +806,66 @@ public class TypingRaceGUI extends JFrame
             case "Black" -> new Color(34, 34, 34);
             default -> new Color(46, 139, 87);
         };
+    }
+
+    private void updateImpactSummary(int typistIndex)
+    {
+        impactSummaryLabels[typistIndex].setText(buildImpactSummaryText(typistIndex));
+    }
+
+    private String buildImpactSummaryText(int typistIndex)
+    {
+        String typingStyle = (String) typingStyleBoxes[typistIndex].getSelectedItem();
+        String keyboardType = (String) keyboardTypeBoxes[typistIndex].getSelectedItem();
+        String accessoryChoice = (String) accessoryBoxes[typistIndex].getSelectedItem();
+
+        double accuracyChange = getTypingStyleAccuracyBonus(typingStyle)
+            + getKeyboardAccuracyBonus(keyboardType)
+            + getAccessoryAccuracyBonus(accessoryChoice);
+        double speedChange = getTypingStyleSpeedBonus(typingStyle)
+            + getKeyboardSpeedBonus(keyboardType)
+            + getAccessorySpeedBonus(accessoryChoice);
+        double mistypeMultiplier = getKeyboardMistypeMultiplier(keyboardType)
+            * getAccessoryMistypeMultiplier(accessoryChoice);
+        double burnoutMultiplier = getTypingStyleBurnoutMultiplier(typingStyle)
+            * getAccessoryBurnoutMultiplier(accessoryChoice);
+
+        return "<html>"
+            + "Accuracy: " + describeChange(accuracyChange)
+            + " | Speed: " + describeChange(speedChange)
+            + "<br>Mistypes: " + describeRisk(mistypeMultiplier)
+            + " | Burnout: " + describeRisk(burnoutMultiplier)
+            + "</html>";
+    }
+
+    private String describeChange(double changeValue)
+    {
+        if (changeValue > 0.02)
+        {
+            return "higher";
+        }
+
+        if (changeValue < -0.02)
+        {
+            return "lower";
+        }
+
+        return "normal";
+    }
+
+    private String describeRisk(double riskMultiplier)
+    {
+        if (riskMultiplier > 1.05)
+        {
+            return "higher";
+        }
+
+        if (riskMultiplier < 0.95)
+        {
+            return "lower";
+        }
+
+        return "normal";
     }
 
     private String getHexColour(Color colour)
