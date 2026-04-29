@@ -3,6 +3,8 @@ package Part2;
 import java.awt.*;
 import javax.swing.*;
 
+// These fixed tables keep the GUI simple by driving dropdown choices
+// and default typist data from one place.
 public class TypingRaceGUI extends JFrame
 {
     private static final String SETUP_CARD = "setup";
@@ -123,6 +125,8 @@ public class TypingRaceGUI extends JFrame
         cardLayout.show(cardPanel, SETUP_CARD);
     }
 
+    // The setup screen collects the overall race options first,
+    // then shows a basic customisation area for each possible seat.
     private JPanel buildSetupPanel()
     {
         JPanel mainPanel = new JPanel(new BorderLayout());
@@ -215,6 +219,8 @@ public class TypingRaceGUI extends JFrame
         return mainPanel;
     }
 
+    // Build one repeated config panel per seat and simply hide the ones
+    // above the currently selected seat count.
     @SuppressWarnings("unchecked")
     private JScrollPane buildTypistCustomisationScrollPane()
     {
@@ -338,6 +344,8 @@ public class TypingRaceGUI extends JFrame
         return racePanel;
     }
 
+    // Once Start is pressed, the form values are copied into the backend
+    // and converted into the typists used by the race engine.
     private void startConfiguredRace()
     {
         selectedPassage = getSelectedPassage();
@@ -501,6 +509,8 @@ public class TypingRaceGUI extends JFrame
         }
     }
 
+    // The Swing timer advances the backend one turn at a time, and this
+    // method refreshes every typist panel from the latest race state.
     private void updateRaceScreen()
     {
         turnLabel.setText("Turn: " + currentRace.getTurnNumber());
@@ -563,6 +573,8 @@ public class TypingRaceGUI extends JFrame
         return laneText.toString();
     }
 
+    // HTML labels are used here so the already-typed part of the passage
+    // can be coloured without needing a more advanced text component.
     private String buildPassageProgressHtml(Typist typist, int seatIndex)
     {
         String passage = currentRace.getPassageText();
@@ -695,6 +707,8 @@ public class TypingRaceGUI extends JFrame
         return symbolText.charAt(0);
     }
 
+    // These helper methods keep the effect values in one place so the
+    // simple customisation system is easier to read and tweak.
     private double getTypingStyleAccuracyBonus(String typingStyle)
     {
         return switch (typingStyle) {

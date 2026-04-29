@@ -14,30 +14,26 @@ This folder contains the Part 1 command-line version of the `TypingRaceSimulator
 - Java Development Kit (`JDK`) 11 or later
 - No external libraries are required
 
-## Setup instructions
+## How to compile and run Part 1 from the terminal
 
-1. Open a terminal.
-2. Navigate to the `Part1` folder.
-3. Compile the Java source files.
-
-Example:
+1. Make sure you're in the folder `TypingRaceSimulator`.
+2. Compile the Part 1 Java files:
 
 ```powershell
-cd Part1
-javac *.java
+javac Part1\*.java
 ```
 
-If your system does not recognise `javac`, make sure the JDK is installed and added to your system `PATH`.
-
-## How to run Part 1
-
-After compiling the files, run:
+3. Run the Part 1 program:
 
 ```powershell
-java Main
+java Part1.Main
 ```
 
 This starts the textual typing race simulation in the terminal.
+
+If your system does not recognise `javac` or `java`, make sure the JDK is installed and added to your system `PATH`.
+
+Make sure to add the 'Part1.' as this file is in the package: 'Part1'
 
 ## Usage guidelines
 
